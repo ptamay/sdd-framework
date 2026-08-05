@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+// Ponto de entrada dos gates — vai para o PATH do Bash enquanto o plugin estiver ativo.
+//
+//   sdd-gates [caminho-do-projeto]
+//
+// Existe como arquivo proprio, e nao como alias para `gates/run.mjs`, por dois motivos:
+//
+//   1. Nao depende de lancador de pacote. A Fase E mediu que `npx` e ENOENT em Windows e
+//      `npx.cmd` e EINVAL sem shell — um comando que resolve por nome e fragil por
+//      construcao. Aqui o shebang aponta para o Node e ponto.
+//   2. O bit de execucao precisa estar NO INDICE DO GIT. O v5 pagou isso tres vezes (itens
+//      204, 207 e 287): em Windows o bit nao existe no filesystem e o git grava 100644, e
+//      um script sem ele e ignorado em silencio em Linux e macOS.
+
+import { executarTodos, formatar, codigoDeSaida, lerValvulas, lerIsencoes } from '../gates/run.mjs';
+
+const raiz = process.argv[2] ?? process.cwd();
+
+const relatorio = await executarTodos({
+  raiz,
+  valvulas: await lerValvulas(raiz),
+  isencoes: await lerIsencoes(raiz),
+});
+
+console.log(formatar(relatorio));
+process.exit(codigoDeSaida(relatorio.veredito));

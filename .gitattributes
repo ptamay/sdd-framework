@@ -1,0 +1,26 @@
+# Fim de linha do toolchain — prevencao na origem, nao conserto depois.
+#
+# O v5 registrou (item 170) que a conversao CRLF DESARMOU um gate inteiro: o arquivo que ele
+# parseava vinha com \r colado no fim de cada caminho, nenhum arquivo era encontrado, e o
+# gate reportava tudo como ausente sem comparar um hash sequer.
+#
+# Aqui o alvo mais grave e outro e e pior: `bin/sdd-gates` comeca com um shebang. Em CRLF,
+# o kernel do Linux le o interpretador como `/usr/bin/env node\r` e responde
+# "bad interpreter: no such file or directory". O executavel do plugin simplesmente nao roda
+# — e quem instalar em Linux ou macOS nao tem como adivinhar por que.
+
+* text=auto
+
+bin/*           text eol=lf
+*.mjs           text eol=lf
+*.js            text eol=lf
+*.json          text eol=lf
+*.md            text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.sh            text eol=lf
+
+# Arquivos de controle sem extensao (valvulas de escape).
+.sdd/coverage-min       text eol=lf
+.sdd/tdd-baseline       text eol=lf
+.sdd/migrations-layout  text eol=lf

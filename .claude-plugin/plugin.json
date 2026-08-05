@@ -1,0 +1,13 @@
+{
+  "name": "sdd",
+  "displayName": "Constitutional SDD",
+  "description": "Desenvolvimento com IA sob gates mecanicos: policy de fonte unica, sete gates executaveis e memoria de projeto duravel. As skills sao invocadas como /sdd:<nome>.",
+  "version": "0.1.0",
+  "author": { "name": "ptamay" },
+
+  "_versao": "Versao EXPLICITA por decisao. Sem ela o Claude Code usa o SHA do commit e todo push vira uma versao nova para quem instalou. Com ela, quem usa so recebe mudanca quando este numero sobe — que e o que um framework de governanca precisa. Lembrar de subir: empurrar commits sem bump nao entrega nada.",
+
+  "_dependencias": "NAO declaramos dependencia do plugin que fornece a skill de craft de UI. Verificado em 2026-08-05: ele nao esta no marketplace oficial (222 plugins) nem em ~/.claude — vem embutido no app. Declarar dependencia que nao resolve faz o `enable` FALHAR. A skill de UI detecta em tempo de execucao e cai no fluxo proprio quando nao acha.",
+
+  "_settings": "NAO shippamos settings.json com a chave `agent`. Ela ativaria um agente do plugin como thread principal em TODO projeto onde o plugin estiver habilitado, inclusive os que nao usam este framework. O contexto sempre-ativo entra pelo hook SessionStart, que so injeta quando a pasta .sdd/ existe — condicional, e nao global."
+}
