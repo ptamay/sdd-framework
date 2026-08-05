@@ -59,6 +59,22 @@
       "para": "    if (false) {"
     },
     {
+      "gate": "typecheck",
+      "origem": "v5 item 255",
+      "nome": "o verificador volta a ser invocado uma segunda vez para pegar o texto",
+      "efeito": "quem ja esta com problema paga o dobro no gate mais caro, e os dois processos podem ver arvores diferentes — o erro IMPRESSO deixa de ser o que reprovou",
+      "de": "  const resultado = await executar(comando, args);",
+      "para": "  const resultado = await executar(comando, args);\n  if (resultado.codigo !== 0) resultado.saida = (await executar(comando, args)).saida;"
+    },
+    {
+      "gate": "typecheck",
+      "origem": "v5 itens 186 e 211",
+      "nome": "falha de spawn volta a ser indistinguivel de saida limpa",
+      "efeito": "o verificador nao roda, devolve texto vazio, e o gate afirma que os tipos estao certos sem ter verificado um unico",
+      "de": "  if (erroDeSpawn) {",
+      "para": "  if (false) {"
+    },
+    {
       "gate": "coverage",
       "origem": "v5 item 212",
       "nome": "o parser de lcov para de acumular os registros",

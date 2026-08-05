@@ -80,8 +80,8 @@
     },
     {
       "id": "typecheck",
-      "numero": null,
-      "status": "candidato",
+      "numero": 7,
+      "status": "ativo",
       "titulo": "Type-check da stack passa",
       "prova": "O verificador de tipos do ecossistema detectado sai limpo",
       "porque": "Pega a API alucinada que o Gate 1 não pega: o pacote existe, o método não.",
@@ -90,8 +90,7 @@
       "invariantes": [
         "M-03"
       ],
-      "antiSilencio": "Verificador ausente => pula com aviso. Uma invocação só, saída guardada: duas invocações podem ver árvores diferentes, e o erro impresso não seria o que reprovou (item 255).",
-      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+      "antiSilencio": "Verificador ausente => pula com aviso. Uma invocação só, saída guardada: duas invocações podem ver árvores diferentes, e o erro impresso não seria o que reprovou (item 255)."
     },
     {
       "id": "env-bypass",
