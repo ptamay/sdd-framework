@@ -4,8 +4,8 @@
   "gates": [
     {
       "id": "imports",
-      "numero": null,
-      "status": "candidato",
+      "numero": 3,
+      "status": "ativo",
       "titulo": "Todo import tem dependência declarada",
       "prova": "Nenhum import de pacote externo sem entrada no manifesto de dependências da stack",
       "porque": "Anti-alucinação. Importar um pacote que não existe é o defeito mais frequente de código gerado por IA, e não quebra type-check quando o pacote é só um nome.",
@@ -19,7 +19,7 @@
       ],
       "antiSilencio": "Stack não reconhecida OU checker que estourou => aviso explícito, nunca ✅. O v5 deu falso verde aqui duas vezes (itens 186 e 211), nos dois ecossistemas, pelo mesmo motivo: status de saída misturado com o texto.",
       "varredura": "lista de EXCLUSÃO a partir da raiz, nunca lista de inclusão — o desconhecido tem de ser varrido, não ignorado (item 208: 'pages/' do Next.js era invisível)",
-      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+      "cobertura": "JavaScript/TypeScript. Python NAO coberto — declarado, nao omitido: projeto Python recebe estado 'pulado' com o motivo, nunca 'ok'."
     },
     {
       "id": "migrations",
