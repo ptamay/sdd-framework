@@ -29,7 +29,10 @@ try {
 
 const raiz = evento.cwd ?? process.cwd();
 
-if (!(await existe(join(raiz, '.sdd')))) process.exit(0);
+// Marcador EXPLICITO, nunca a mera existencia de `.sdd/`. A versao anterior deste
+// framework usa o mesmo diretorio: abrir o repositorio dela com este plugin carregado
+// injetaria o processo errado, sem nada que denunciasse a troca.
+if (!(await existe(join(raiz, '.sdd', 'framework.json')))) process.exit(0);
 
 const ativos = await gatesAtivos();
 const catalogo = await carregarCatalogo();
@@ -40,7 +43,7 @@ const memoria = await lerMemoria(raiz);
 const linhas = [
   '# Constitutional SDD — ativo neste projeto',
   '',
-  'Este diretorio tem `.sdd/`, entao o framework governa o trabalho aqui.',
+  'Este projeto declara `.sdd/framework.json`, entao o framework governa o trabalho aqui.',
   '',
   '## Antes de gerar codigo',
   '',

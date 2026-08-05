@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+// Registra um achado durante o uso — a bancada da proxima versao.
+//
+//   sdd-achado "o gate X pulou num projeto que claramente tem Y"
+//
+// Existe porque a alternativa e lembrar depois, e o v5 mostrou o que acontece: 27 achados
+// de uma execucao real, todos anotados a mao, e varios so descobertos porque alguem foi
+// conferir. O que NAO foi anotado na hora nao existe mais.
+//
+// Deliberadamente burro: uma frase, e o contexto vem de graca (data, branch, e o veredito
+// da ultima execucao dos gates). Ferramenta de registro que exige preencher formulario e
+// ferramenta que ninguem usa no meio do trabalho — e a hora em que o achado aparece e
+// exatamente a hora em que se esta ocupado com outra coisa.
+
+import { appendFile, mkdir, readFile, access } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { join } from 'node:path';
+
+import { ler } from '../gates/lib/registro.mjs';
+
+const exec = promisify(execFile);
+
+const texto = process.argv.slice(2).join(' ').trim();
+const raiz = process.cwd();
+const ARQUIVO = join(raiz, '.sdd', 'achados.md');
+
+if (!texto) {
+  console.error('uso: sdd-achado "o que aconteceu"');
+  console.error('');
+  console.error('Descreva o COMPORTAMENTO observado, nao a causa suposta. No v5, tres');
+  console.error('diagnosticos seguidos de um mesmo sintoma estavam errados — a causa so');
+  console.error('apareceu quando alguem mediu em vez de deduzir.');
+  process.exit(1);
+}
+
+const branch = await exec('git', ['branch', '--show-current'], { cwd: raiz })
+  .then(({ stdout }) => stdout.trim())
+  .then((b) => b || '(sem branch)')
+  .catch(() => '(sem git)');
+
+const execucoes = await ler(raiz);
+const ultima = execucoes.at(-1);
+
+const entrada = [
+  '',
+  `## ${new Date().toISOString().slice(0, 16).replace('T', ' ')} · \`${branch}\``,
+  '',
+  texto,
+  '',
+  ultima
+    ? `> Ultima execucao dos gates: **${ultima.veredito}** — ${ultima.verificados} verificado(s), ` +
+      `${ultima.pulados} pulado(s), ${ultima.reprovados} reprovado(s).`
+    : '> Nenhuma execucao de gates registrada neste projeto ainda.',
+].join('\n');
+
+if (!(await access(ARQUIVO).then(() => true, () => false))) {
+  await mkdir(join(raiz, '.sdd'), { recursive: true });
+  await appendFile(
+    ARQUIVO,
+    [
+      '# Achados de uso',
+      '',
+      'Bancada da proxima versao. Cada item aqui, ao fechar, vira **um caso que falha antes**',
+      'do conserto — ou um dono nomeado, quando nao mecaniza com honestidade.',
+      '',
+      'Regra de admissao herdada da versao anterior: nada entra no framework sem constar de',
+      'uma bancada como esta, e nada sai daqui sem prova.',
+      '',
+    ].join('\n'),
+  );
+}
+
+await appendFile(ARQUIVO, `${entrada}\n`);
+
+console.log(`registrado em .sdd/achados.md (${execucoes.length} execucao(oes) de gates neste projeto)`);

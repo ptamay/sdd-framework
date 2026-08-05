@@ -158,3 +158,38 @@ test('o bootstrap DECLARA o passo que nenhum gate cobre', async () => {
   assert.match(stdout, /protecao de branch|proteção de branch/i);
   assert.match(stdout, /MANUAL/);
 });
+
+// --------------------------------------------------------------------- marcador e registro
+
+test('o marcador do framework e EXPLICITO, nunca a mera existencia de .sdd/', async () => {
+  // A versao anterior deste framework tambem usa `.sdd/`. Sem marcador proprio, abrir o
+  // repositorio dela com este plugin carregado injetaria o processo errado na sessao — e
+  // marcador ambiguo e pior que marcador nenhum: ele responde, e responde errado.
+  const raiz = await repoNovo();
+  await rodarInit(raiz);
+
+  const m = JSON.parse(await readFile(join(raiz, '.sdd', 'framework.json'), 'utf8'));
+  assert.equal(m.framework, 'sdd');
+  assert.match(m.versao, /^\d+\.\d+\.\d+$/);
+
+  const hook = await readFile(join(RAIZ, 'hooks', 'contexto.mjs'), 'utf8');
+  assert.match(hook, /framework\.json/, 'o hook nao exige o marcador');
+});
+
+test('a execucao dos gates fica REGISTRADA, com o motivo de cada pulo', async () => {
+  // O v5 produziu 27 achados numa execucao real, todos anotados a mao. O que se perde sem
+  // registro nao e o achado espetacular — e o padrao: um gate que pula sempre pelo mesmo
+  // motivo e um gate que nao existe na pratica, e isso so aparece na serie.
+  const raiz = await repoNovo();
+  await rodarInit(raiz);
+  await exec(process.execPath, [join(RAIZ, 'bin', 'sdd-gates'), raiz], { cwd: raiz });
+
+  const linhas = (await readFile(join(raiz, '.sdd', 'execucoes.jsonl'), 'utf8'))
+    .split('\n').filter(Boolean).map((l) => JSON.parse(l));
+
+  assert.ok(linhas.length >= 1);
+  const r = linhas.at(-1);
+  assert.ok(['aprovado', 'nada-verificado', 'reprovado'].includes(r.veredito));
+  assert.equal(r.branch, 'main', 'branch nao resolvida em repositorio sem commits');
+  assert.ok(r.gates.every((g) => g.estado !== 'pulado' || g.aviso), 'pulo sem motivo registrado');
+});

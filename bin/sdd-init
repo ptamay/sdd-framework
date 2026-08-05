@@ -30,6 +30,9 @@ const FRAMEWORK = raizDoRepo();
 
 const memoria = JSON.parse(await readFile(join(FRAMEWORK, 'policy', 'memoria.json'), 'utf8'));
 const catalogo = JSON.parse(await readFile(join(FRAMEWORK, 'policy', 'gates.json'), 'utf8'));
+const { version: versaoDoPlugin } = JSON.parse(
+  await readFile(join(FRAMEWORK, '.claude-plugin', 'plugin.json'), 'utf8'),
+);
 
 const criados = [];
 const preservados = [];
@@ -82,6 +85,15 @@ async function arquivos() {
   const min = catalogo.gates.find((g) => g.id === 'coverage').minimoPadrao;
 
   return {
+    // Marcador EXPLICITO. `.sdd/` sozinho nao serve: a versao anterior deste framework
+    // tambem usa esse diretorio, entao um projeto v5 seria lido como projeto v6 e receberia
+    // o processo errado injetado na sessao. Marcador ambiguo e pior que marcador nenhum —
+    // ele da uma resposta, e a resposta esta errada.
+    '.sdd/framework.json': JSON.stringify(
+      { framework: 'sdd', versao: versaoDoPlugin, criado: new Date().toISOString().slice(0, 10) },
+      null,
+      2,
+    ) + '\n',
     [`${memoria.raiz}/LEIA.md`]: guiaDaMemoria(),
     '.sdd/coverage-min': `${min}\n`,
     '.github/workflows/ci.yml': ci(),

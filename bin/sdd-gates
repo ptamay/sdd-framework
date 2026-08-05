@@ -12,7 +12,12 @@
 //      204, 207 e 287): em Windows o bit nao existe no filesystem e o git grava 100644, e
 //      um script sem ele e ignorado em silencio em Linux e macOS.
 
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { executarTodos, formatar, codigoDeSaida, lerValvulas, lerIsencoes } from '../gates/run.mjs';
+import { raizDoRepo } from '../gates/lib/policy.mjs';
+import { registrar } from '../gates/lib/registro.mjs';
 
 const raiz = process.argv[2] ?? process.cwd();
 
@@ -23,4 +28,12 @@ const relatorio = await executarTodos({
 });
 
 console.log(formatar(relatorio));
+
+// Registra ANTES de sair. Nao registrar a execucao que reprovou seria perder exatamente a
+// que interessa — e `process.exit` nao espera promessa pendente.
+const { version } = JSON.parse(
+  await readFile(join(raizDoRepo(), '.claude-plugin', 'plugin.json'), 'utf8'),
+);
+await registrar(raiz, relatorio, version);
+
 process.exit(codigoDeSaida(relatorio.veredito));
