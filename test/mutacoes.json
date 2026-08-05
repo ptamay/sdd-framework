@@ -75,6 +75,30 @@
       "para": "    if (false) {"
     },
     {
+      "gate": "env-bypass",
+      "origem": "v6 — cometido e pego pelos proprios casos",
+      "nome": "o prefixo NO volta a nao exigir separador",
+      "efeito": "NODE_TLS_REJECT_UNAUTHORIZED e lido como chave negativa, e o bypass de TLS mais direto que existe passa batido em producao",
+      "de": "  const negativa = /^(DISABLE|SKIP|BYPASS|INSECURE|ALLOW_INSECURE|DESABILITAR|PULAR|IGNORAR|SEM)/i.test(chave) || /^NO_/i.test(chave);",
+      "para": "  const negativa = /^(DISABLE|SKIP|BYPASS|NO|INSECURE|ALLOW_INSECURE|DESABILITAR|PULAR|IGNORAR|SEM)/i.test(chave);"
+    },
+    {
+      "gate": "env-bypass",
+      "origem": "v6 — cometido e pego pelos proprios casos",
+      "nome": "a fronteira de RLS volta a ser borda de palavra",
+      "efeito": "`_` e caractere de palavra, entao \\b nunca casa dentro de SKIP_RLS: desligar row-level security passa em todo ambiente que nao tenha outro padrao cobrindo",
+      "de": "  /(^|[_-])RLS([_-]|$)|ROW_?LEVEL/i,",
+      "para": "  /\\bRLS\\b|ROW_?LEVEL/i,"
+    },
+    {
+      "gate": "env-bypass",
+      "origem": "nova — o eixo que o v5 tinha so em prosa",
+      "nome": "o eixo nunca-relaxa deixa de valer fora de producao",
+      "efeito": "desligar isolamento de tenant ou cifra de campo em dev passa — e o codigo escrito com o filtro desligado e o mesmo que vai para producao",
+      "de": "      if (NUNCA_RELAXA.some((p) => p.test(chave)) && desligado(chave, valor)) {",
+      "para": "      if (protegido && NUNCA_RELAXA.some((p) => p.test(chave)) && desligado(chave, valor)) {"
+    },
+    {
       "gate": "coverage",
       "origem": "nova — classe da valvula fantasma",
       "nome": "valvula invalida cai no padrao em silencio",

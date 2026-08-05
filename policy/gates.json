@@ -95,8 +95,8 @@
     },
     {
       "id": "env-bypass",
-      "numero": null,
-      "status": "candidato",
+      "numero": 6,
+      "status": "ativo",
       "titulo": "Nenhum bypass de desenvolvimento em configuração de produção",
       "prova": "Relaxamento de controle (2FA, lockout, rate limit, verificação) não aparece em perfil de produção ou staging",
       "porque": "O atalho que se cria para testar local é o que vaza para produção sem ninguém notar.",
@@ -112,7 +112,10 @@
         "secrets",
         "cifra de campo"
       ],
-      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+      "eixos": {
+        "relaxavel-so-em-dev": "2FA, lockout, rate limit, verificacao, TLS — bloqueador so em perfil de producao/staging",
+        "nunca-relaxa": "isolamento de tenant, anti-injecao/sanitizacao, cifra de campo — bloqueador em QUALQUER ambiente, inclusive local"
+      }
     },
     {
       "id": "coverage",
