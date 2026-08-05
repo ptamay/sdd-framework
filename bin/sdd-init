@@ -1,0 +1,183 @@
+#!/usr/bin/env node
+// Bootstrap de projeto — cria o minimo que o framework precisa DENTRO do repositorio.
+//
+//   sdd-init [caminho-do-projeto]
+//
+// Sao poucos arquivos de proposito. No v5 o bootstrap copiava o framework inteiro para
+// dentro de cada projeto — 76 arquivos — e daquilo nasceram o selo, o manifesto, os guards,
+// a caca a copias orfas e cerca de mil e duzentas linhas de codigo cuja unica funcao era
+// defender o framework de si mesmo. Aqui o framework mora no plugin; o projeto so guarda o
+// que e DELE: memoria, valvulas e o enforcement que roda no servidor.
+//
+// Duas regras de comportamento:
+//
+//   NUNCA SOBRESCREVE   arquivo que ja existe e reportado como preservado. Bootstrap que
+//                       apaga trabalho e bootstrap que ninguem roda duas vezes.
+//   VERIFICA O PRODUTO  ao terminar, roda os gates no projeto recem-criado e imprime o
+//                       resultado. O v5 registrou (item 207) que TODO projeto que ele criava
+//                       nascia reprovado, por um defeito que o autoteste do framework nao
+//                       via: fixture de gate prova o gate, so rodar o bootstrap prova o
+//                       bootstrap.
+
+import { mkdir, writeFile, access, readFile } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
+
+import { raizDoRepo, gatesAtivos } from '../gates/lib/policy.mjs';
+import { executarTodos, formatar, lerValvulas, lerIsencoes } from '../gates/run.mjs';
+
+const projeto = process.argv[2] ?? process.cwd();
+const FRAMEWORK = raizDoRepo();
+
+const memoria = JSON.parse(await readFile(join(FRAMEWORK, 'policy', 'memoria.json'), 'utf8'));
+const catalogo = JSON.parse(await readFile(join(FRAMEWORK, 'policy', 'gates.json'), 'utf8'));
+
+const criados = [];
+const preservados = [];
+
+for (const [caminho, conteudo] of Object.entries(await arquivos())) {
+  const destino = join(projeto, caminho);
+  if (await existe(destino)) {
+    preservados.push(caminho);
+    continue;
+  }
+  await mkdir(dirname(destino), { recursive: true });
+  await writeFile(destino, conteudo);
+  criados.push(caminho);
+}
+
+console.log('# Bootstrap do projeto\n');
+for (const c of criados) console.log(`  criado     ${c}`);
+for (const p of preservados) console.log(`  preservado ${p}`);
+
+if (!criados.length) console.log('  (nada a criar — o projeto ja estava montado)');
+
+console.log('\n# Verificacao — os gates no projeto recem-criado\n');
+const relatorio = await executarTodos({
+  raiz: projeto,
+  valvulas: await lerValvulas(projeto),
+  isencoes: await lerIsencoes(projeto),
+});
+console.log(formatar(relatorio));
+
+if (relatorio.veredito === 'reprovado') {
+  console.log('\nO BOOTSTRAP PRODUZIU UM PROJETO REPROVADO. Isto e defeito do framework,');
+  console.log('nao seu — reporte. (No v5 isto aconteceu com todo projeto criado, por tres');
+  console.log('versoes, porque ninguem verificava o produto do bootstrap.)');
+  process.exit(1);
+}
+
+console.log('\n# Proximo passo\n');
+console.log('  /sdd:escopo        define o que o sistema faz');
+console.log('\nUm passo MANUAL que nenhum gate cobre: ligue a protecao de branch no');
+console.log('repositorio remoto. O job de CI so vira barreira quando ela existe — sem ela,');
+console.log('o check fica vermelho e o merge acontece assim mesmo.');
+
+// ---------------------------------------------------------------------------
+
+async function existe(c) {
+  return access(c).then(() => true, () => false);
+}
+
+async function arquivos() {
+  const min = catalogo.gates.find((g) => g.id === 'coverage').minimoPadrao;
+
+  return {
+    [`${memoria.raiz}/LEIA.md`]: guiaDaMemoria(),
+    '.sdd/coverage-min': `${min}\n`,
+    '.github/workflows/ci.yml': ci(),
+    '.claude/settings.json': settings(),
+  };
+}
+
+/** O guia da memoria e DERIVADO do contrato. Escrito a mao, ele seria a segunda fonte. */
+function guiaDaMemoria() {
+  const linhas = [
+    '# Memoria do projeto',
+    '',
+    'Estes arquivos sao a verdade DESTE projeto. O framework mora no plugin, fora daqui.',
+    '',
+    'Gerado por `sdd-init` a partir do contrato de memoria do framework — nao edite este',
+    'guia a mao: ele fica velho e passa a discordar do que os gates cobram.',
+    '',
+  ];
+
+  for (const a of memoria.arquivos) {
+    linhas.push(`## \`${a.arquivo}\``, '');
+    linhas.push(`${a.guarda}. Nasce na rota **${a.nasce}**.`, '');
+    linhas.push(`- **Regra:** ${a.regra}`);
+    linhas.push(`- **Secoes:** ${a.secoes.map((s) => `\`## ${s}\``).join(' · ')}`);
+    if (a.porque) linhas.push(`- **Por que:** ${a.porque}`);
+    linhas.push('');
+  }
+
+  linhas.push('## Valvulas de escape', '');
+  linhas.push('Baixar a regua conscientemente e decisao registrada; contornar o gate e');
+  linhas.push('divida invisivel. Por isso cada valvula e um ARQUIVO, visivel num diff:', '');
+  for (const v of memoria.valvulas) {
+    linhas.push(`- \`${v.arquivo}\` (gate \`${v.gate}\`) — ${v.formato}`);
+  }
+
+  return linhas.join('\n') + '\n';
+}
+
+function ci() {
+  const origem = process.env.SDD_ORIGEM ?? '<URL-DO-REPOSITORIO-DO-FRAMEWORK>';
+  return `# Gates do Constitutional SDD.
+#
+# Este job e o unico enforcement que roda ONDE O AGENTE NAO ESCREVE. Tudo o mais — hook,
+# guard, execucao local — roda na mesma maquina, sob o mesmo usuario e com as mesmas
+# permissoes de quem gera o codigo. O v5 mediu isso: um agente reescreveu a regra de
+# seguranca numero 1, rodou a selagem sozinho, commitou e recebeu aprovacao de todos os
+# gates locais.
+#
+# O framework NAO e copiado para dentro deste repositorio. Ele e clonado no runner, na
+# versao fixada abaixo.
+
+name: gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependencias do projeto
+        run: npm ci
+        continue-on-error: true
+
+      - name: Suite de teste com cobertura
+        run: npm test --if-present
+
+      - name: Obter o framework
+        run: git clone --depth 1 ${origem} "\${RUNNER_TEMP}/sdd"
+
+      - name: Gates
+        run: node "\${RUNNER_TEMP}/sdd/bin/sdd-gates" .
+`;
+}
+
+function settings() {
+  return (
+    JSON.stringify(
+      {
+        _: 'Permissoes do projeto. Ficam AQUI, e nao no plugin, porque o settings.json de plugin so aceita as chaves de agente e de status line — permissoes nao viajam com ele.',
+        permissions: {
+          deny: ['Bash(git push --force:*)', 'Bash(git push -f:*)'],
+        },
+      },
+      null,
+      2,
+    ) + '\n'
+  );
+}
+
+export { gatesAtivos };

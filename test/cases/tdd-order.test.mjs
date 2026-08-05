@@ -12,8 +12,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const exec = promisify(execFile);
+
 import {
   analisar,
+  rodar,
   parseMensagem,
   normalizarTask,
   TIPOS_AUDITADOS,
@@ -163,4 +172,26 @@ test('normalizarTask preenche zeros a esquerda', () => {
   assert.equal(normalizarTask('TASK-1'), 'TASK-001');
   assert.equal(normalizarTask('TASK-042'), 'TASK-042');
   assert.equal(normalizarTask('TASK-1234'), 'TASK-1234');
+});
+
+// --------------------------------------------------------------------- historico real
+
+test('repositorio SEM COMMITS pula — nao e historico ilegivel', async () => {
+  // Achado na primeira execucao do bootstrap, e e o item 207 do v5 se reproduzindo: o
+  // produto do bootstrap nascia REPROVADO por um defeito que nenhuma fixture de gate via.
+  // `git log` num repo recem-criado sai com erro, e ler isso como "ilegivel" reprovava todo
+  // projeto novo. Historico vazio e estado legitimo; historico ilegivel e defeito.
+  const raiz = await mkdtemp(join(tmpdir(), 'sdd-vazio-'));
+  await exec('git', ['init', '-b', 'main'], { cwd: raiz });
+
+  const r = await rodar(raiz);
+  assert.equal(r.estado, 'pulado', `repo sem commits devolveu "${r.estado}"`);
+  assert.match(r.aviso, /sem commits/i);
+});
+
+test('diretorio que nao e repositorio git pula com o motivo certo', async () => {
+  const raiz = await mkdtemp(join(tmpdir(), 'sdd-sem-git-'));
+  const r = await rodar(raiz);
+  assert.equal(r.estado, 'pulado');
+  assert.match(r.aviso, /nao e um repositorio git|não é um repositório git/i);
 });

@@ -132,12 +132,28 @@ export async function rodar(raizProjeto, opcoes = {}) {
     });
     saida = stdout;
   } catch (erro) {
-    // O historico nao pode ser lido. Isso NAO e "nenhuma violacao encontrada".
-    return {
-      estado: 'erro',
-      achados: [],
-      aviso: `historico do git ilegivel: ${erro.message}`,
-    };
+    // Tres situacoes DIFERENTES chegam aqui, e confundi-las custou caro na primeira
+    // execucao do bootstrap: um repositorio recem-criado, sem nenhum commit, fazia
+    // `git log` sair com erro e o gate lia isso como "historico ilegivel" — entao TODO
+    // projeto criado pelo framework nascia reprovado. E exatamente o item 207 do v5, que
+    // por tres versoes entregou projetos derivados reprovados de fabrica.
+    //
+    // Historico VAZIO e estado legitimo. Historico ILEGIVEL e defeito.
+    const texto = `${erro.stderr ?? ''}${erro.message ?? ''}`;
+
+    const ehRepo = await exec('git', ['rev-parse', '--git-dir'], { cwd: raizProjeto }).then(
+      () => true,
+      () => false,
+    );
+    if (!ehRepo) {
+      return { estado: 'pulado', achados: [], aviso: 'o diretorio nao e um repositorio git — nada foi conferido' };
+    }
+
+    if (/does not have any commits|unknown revision|bad default revision|ambiguous argument/i.test(texto)) {
+      return { estado: 'pulado', achados: [], aviso: 'repositorio sem commits ainda — nada foi conferido' };
+    }
+
+    return { estado: 'erro', achados: [], aviso: `historico do git ilegivel: ${erro.message}` };
   }
 
   const commits = saida

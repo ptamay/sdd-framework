@@ -1,6 +1,5 @@
 {
   "_": "Catalogo de defeitos historicos, para reintroducao deliberada. Executor do invariante M-19: caso que passou de primeira ainda nao provou nada. Cada entrada reintroduz um bug REAL, medido no v5, e exige que ao menos um caso caia. Mutacao que nao derruba nada e um furo na suite, nao um acerto do codigo.",
-
   "mutacoes": [
     {
       "gate": "secrets",
@@ -153,6 +152,14 @@
       "efeito": "o usuario acha que baixou a regua e nao baixou — ou pior, acha que a subiu",
       "de": "  if (!Number.isInteger(n) || n < 1 || n > 100) {",
       "para": "  if (false) {"
+    },
+    {
+      "gate": "tdd-order",
+      "origem": "v5 item 207 — reproduzido na primeira execucao do bootstrap do v6",
+      "nome": "repositorio sem commits volta a ser lido como historico ilegivel",
+      "efeito": "todo projeto criado pelo bootstrap nasce REPROVADO, por um defeito que nenhuma fixture de gate ve — foi assim que a versao anterior entregou projetos reprovados de fabrica por tres versoes",
+      "de": "    if (/does not have any commits|unknown revision|bad default revision|ambiguous argument/i.test(texto)) {",
+      "para": "    if (false) {"
     }
   ]
 }
