@@ -1,0 +1,62 @@
+{
+  "_": "Catalogo de defeitos historicos, para reintroducao deliberada. Executor do invariante M-19: caso que passou de primeira ainda nao provou nada. Cada entrada reintroduz um bug REAL, medido no v5, e exige que ao menos um caso caia. Mutacao que nao derruba nada e um furo na suite, nao um acerto do codigo.",
+
+  "mutacoes": [
+    {
+      "gate": "secrets",
+      "origem": "v5 item 169",
+      "nome": "comparacao de identificador volta a ser sensivel a caixa",
+      "efeito": "apiKey, API_KEY, secretKey, PASSWORD e authToken — as grafias DOMINANTES — atravessavam o gate, o pre-commit, o pre-push e o CI",
+      "de": "    .toLowerCase()\n    .split(/\\s+/)",
+      "para": "    .split(/\\s+/)"
+    },
+    {
+      "gate": "migrations",
+      "origem": "v5 item 200",
+      "nome": "o corte do corpo volta a comecar na linha, nao no token",
+      "efeito": "em arquivo de uma linha, a primeira chave e a do objeto externo: o corpo do up contava como corpo do down, e o stub vazio passava como rollback pronto",
+      "de": "const abre = depois.indexOf('{');",
+      "para": "const abre = texto.indexOf('{') - (m.index + nome.length);"
+    },
+    {
+      "gate": "imports",
+      "origem": "v5 item 208 (metade do falso verde)",
+      "nome": "varredura volta a ser lista de inclusao",
+      "efeito": "pages/, server/, api/, routes/, middleware/, a raiz e o monorepo ficam cegos — import inventado no Pages Router padrao do Next.js passa sem o arquivo ser aberto",
+      "de": "  if (partes.some((p) => DIR_EXCLUIDOS.has(p))) return false;\n  return JS.test(caminho);",
+      "para": "  const INCLUIR = ['src', 'app', 'lib', 'components'];\n  if (!INCLUIR.includes(partes[0])) return false;\n  return JS.test(caminho);"
+    },
+    {
+      "gate": "imports",
+      "origem": "v5 item 208 (metade do falso vermelho)",
+      "nome": "lista de builtins volta a ser escrita a mao",
+      "efeito": "net, assert, worker_threads, tls e dns viram acusacao de alucinacao — gate que reprova quem esta certo",
+      "de": "const BUILTINS = new Set(builtinModules);",
+      "para": "const BUILTINS = new Set(['fs', 'path', 'os', 'http', 'https', 'util', 'events', 'stream', 'buffer', 'child_process', 'crypto', 'url', 'querystring', 'zlib', 'readline']);"
+    },
+    {
+      "gate": "tdd-order",
+      "origem": "v5 §3.30 (verificado em execucao real)",
+      "nome": "a ordem passa a se lavar depois do fato",
+      "efeito": "bastaria commitar o teste depois para ficar verde — exatamente o habito que o gate existe para impedir",
+      "de": "    if (iTeste > iImpl) {",
+      "para": "    if (false) {"
+    },
+    {
+      "gate": "tdd-order",
+      "origem": "v5 §3.30 (verificado em execucao real)",
+      "nome": "TASK-7 deixa de ser a mesma task que TASK-007",
+      "efeito": "o par correto e lido como duas tasks distintas, e as duas sao acusadas",
+      "de": "  return `TASK-${n.padStart(3, '0')}`;",
+      "para": "  return `TASK-${n}`;"
+    },
+    {
+      "gate": "tdd-order",
+      "origem": "nova — classe do anti-silencio (M-01)",
+      "nome": "baseline apontando para nada deixa de ser falha",
+      "efeito": "a valvula desliga o gate em silencio e ele segue imprimindo que conferiu",
+      "de": "    if (i === -1) {",
+      "para": "    if (false) {"
+    }
+  ]
+}

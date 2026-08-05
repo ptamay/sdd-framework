@@ -74,6 +74,24 @@ test('gate ativo tem implementação; candidato NÃO tem', async () => {
   }
 });
 
+test('a implementação de gate ativo não está vazia nem truncada', async () => {
+  // Invariante M-12 — perda silenciosa que não quebra nada.
+  //
+  // Um arquivo de gate com ZERO BYTES importa sem erro: só estoura quem pede um símbolo
+  // nomeado dele. Se a suíte daquele gate fosse a única a importá-lo, um arquivo truncado
+  // passaria por "gate ativo tem implementação" e o gate simplesmente deixaria de existir.
+  //
+  // Não é hipotético: aconteceu neste repositório. O harness de mutação escrevia no arquivo
+  // real, um pipe fechado matou o processo no meio, e a restauração — que trunca antes de
+  // escrever — deixou o gate em 0 bytes.
+  const ativos = await gatesAtivos();
+  for (const g of ativos) {
+    const fonte = await readFile(join(RAIZ, 'gates', `${g.id}.mjs`), 'utf8');
+    assert.ok(fonte.length > 0, `gates/${g.id}.mjs está VAZIO`);
+    assert.match(fonte, /^export /m, `gates/${g.id}.mjs não exporta nada — truncado?`);
+  }
+});
+
 test('os gates ativos são numerados de 1 a N, sem buraco nem repetição', async () => {
   const ativos = await gatesAtivos();
   const numeros = ativos.map((g) => g.numero).sort((a, b) => a - b);

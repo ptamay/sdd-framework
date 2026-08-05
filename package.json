@@ -8,7 +8,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test \"test/cases/*.test.mjs\""
+    "test": "node --test \"test/cases/*.test.mjs\"",
+    "mutar": "node test/mutar.mjs",
+    "prova": "npm test && npm run mutar"
   },
   "_dependencias": "ZERO por decisao. Os gates rodam contra o projeto do usuario, a partir do diretorio do plugin — dependencia aqui viraria instalacao no ${CLAUDE_PLUGIN_DATA} e uma superficie de falha que nenhum projeto pediu. Policy em JSON, e nao YAML, pela mesma razao: JSON tem parser em toda linguagem, sem pacote."
 }

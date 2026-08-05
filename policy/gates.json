@@ -65,8 +65,8 @@
     },
     {
       "id": "tdd-order",
-      "numero": null,
-      "status": "candidato",
+      "numero": 4,
+      "status": "ativo",
       "titulo": "Ordem TDD: teste antes de implementação, por task",
       "prova": "Para cada task, o commit de teste precede o commit de implementação no histórico",
       "porque": "É a única prova mecânica de que o teste não foi escrito depois para acompanhar o código que já passava.",
@@ -76,8 +76,7 @@
         "P-13"
       ],
       "antiSilencio": null,
-      "regra": "auditado POR TASK — uma task fora de ordem não arrasta as corretas; e a ordem não se lava depois do fato: um commit de teste posterior não conserta a implementação anterior",
-      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+      "regra": "auditado POR TASK — uma task fora de ordem não arrasta as corretas; e a ordem não se lava depois do fato: um commit de teste posterior não conserta a implementação anterior"
     },
     {
       "id": "typecheck",
