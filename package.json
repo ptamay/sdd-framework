@@ -1,0 +1,14 @@
+{
+  "name": "sdd-framework",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nucleo agnostico do framework SDD — policy de fonte unica + gates executaveis",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test \"test/cases/*.test.mjs\""
+  },
+  "_dependencias": "ZERO por decisao. Os gates rodam contra o projeto do usuario, a partir do diretorio do plugin — dependencia aqui viraria instalacao no ${CLAUDE_PLUGIN_DATA} e uma superficie de falha que nenhum projeto pediu. Policy em JSON, e nao YAML, pela mesma razao: JSON tem parser em toda linguagem, sem pacote."
+}

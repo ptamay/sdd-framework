@@ -1,0 +1,203 @@
+{
+  "_": "FONTE ÚNICA do catálogo de gates. Nada no framework repete este número, esta lista ou estes títulos — quem precisa deles LÊ este arquivo ou é GERADO dele. Invariante I-01. O v5 corrigiu a mesma faixa de gates desatualizada duas vezes à mão (itens 176 e 232) antes de aprender isso.",
+  "versaoSchema": 1,
+  "gates": [
+    {
+      "id": "imports",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Todo import tem dependência declarada",
+      "prova": "Nenhum import de pacote externo sem entrada no manifesto de dependências da stack",
+      "porque": "Anti-alucinação. Importar um pacote que não existe é o defeito mais frequente de código gerado por IA, e não quebra type-check quando o pacote é só um nome.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "S-03",
+        "M-01",
+        "M-02",
+        "M-03"
+      ],
+      "antiSilencio": "Stack não reconhecida OU checker que estourou => aviso explícito, nunca ✅. O v5 deu falso verde aqui duas vezes (itens 186 e 211), nos dois ecossistemas, pelo mesmo motivo: status de saída misturado com o texto.",
+      "varredura": "lista de EXCLUSÃO a partir da raiz, nunca lista de inclusão — o desconhecido tem de ser varrido, não ignorado (item 208: 'pages/' do Next.js era invisível)",
+      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+    },
+    {
+      "id": "migrations",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Todo UP tem DOWN real, na forma do dialeto",
+      "prova": "Cada migration de subida tem rollback correspondente, com corpo não-vazio, na convenção do dialeto detectado",
+      "porque": "Migration sem rollback é a mudança que não se desfaz às 3h da manhã. E 'tem uma função down()' não é rollback: o gerador de vários dialetos emite o stub vazio por template.",
+      "bloqueia": true,
+      "valvula": "migrations-layout",
+      "invariantes": [
+        "S-02",
+        "M-01",
+        "M-10"
+      ],
+      "antiSilencio": "Indício de banco sem dialeto reconhecido => FALHA pedindo a válvula, nunca 'nenhuma migration encontrada'. Diretório do dialeto vazio => pula com aviso, nunca '0 migrations com DOWN pareado' (item 254).",
+      "dialetos": [
+        "pair",
+        "prisma",
+        "drizzle",
+        "alembic",
+        "jsmig",
+        "mongo",
+        "none"
+      ],
+      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+    },
+    {
+      "id": "secrets",
+      "numero": 1,
+      "status": "ativo",
+      "titulo": "Nenhum secret hardcoded",
+      "prova": "Nenhum valor literal em identificador suspeito, nenhum prefixo de credencial reconhecível, nenhum valor sem aspas em arquivo de ambiente",
+      "porque": "É o vazamento mais caro e o mais fácil de cometer. Varre o fonte inteiro, comentário incluído.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "S-01",
+        "M-02"
+      ],
+      "antiSilencio": null,
+      "idioma": "identificador suspeito tem ramo próprio para português: o inglês é head-final (dbPassword) e o português head-initial (senhaDoBanco). Não é palavra faltando na lista — é a estrutura da língua (item 209). Afrouxar o ramo inglês faria 'tokenizer' virar acusação.",
+      "exemplos": "placeholder de connection string em arquivo de exemplo NÃO é acusado (estruturalmente idêntico ao real, nenhum prefixo os separa); prefixo de chave real é acusado em todo lugar, inclusive exemplo (item 281)"
+    },
+    {
+      "id": "tdd-order",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Ordem TDD: teste antes de implementação, por task",
+      "prova": "Para cada task, o commit de teste precede o commit de implementação no histórico",
+      "porque": "É a única prova mecânica de que o teste não foi escrito depois para acompanhar o código que já passava.",
+      "bloqueia": true,
+      "valvula": "tdd-baseline",
+      "invariantes": [
+        "P-13"
+      ],
+      "antiSilencio": null,
+      "regra": "auditado POR TASK — uma task fora de ordem não arrasta as corretas; e a ordem não se lava depois do fato: um commit de teste posterior não conserta a implementação anterior",
+      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+    },
+    {
+      "id": "typecheck",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Type-check da stack passa",
+      "prova": "O verificador de tipos do ecossistema detectado sai limpo",
+      "porque": "Pega a API alucinada que o Gate 1 não pega: o pacote existe, o método não.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "M-03"
+      ],
+      "antiSilencio": "Verificador ausente => pula com aviso. Uma invocação só, saída guardada: duas invocações podem ver árvores diferentes, e o erro impresso não seria o que reprovou (item 255).",
+      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+    },
+    {
+      "id": "env-bypass",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Nenhum bypass de desenvolvimento em configuração de produção",
+      "prova": "Relaxamento de controle (2FA, lockout, rate limit, verificação) não aparece em perfil de produção ou staging",
+      "porque": "O atalho que se cria para testar local é o que vaza para produção sem ninguém notar.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "S-04"
+      ],
+      "antiSilencio": null,
+      "naoRelaxam": [
+        "isolamento de tenant",
+        "anti-injeção",
+        "secrets",
+        "cifra de campo"
+      ],
+      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+    },
+    {
+      "id": "coverage",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Cobertura de teste medida acima do mínimo",
+      "prova": "Relatório de cobertura lido e comparado com o mínimo declarado",
+      "porque": "Enquanto isso viveu só no checklist de Definition of Done, era um [x] marcado por quem escreveu o código. Item de checklist não mede nada.",
+      "bloqueia": true,
+      "valvula": "coverage-min",
+      "invariantes": [
+        "S-05",
+        "M-01",
+        "I-13"
+      ],
+      "antiSilencio": "Formato de relatório não reconhecido => FALHA. Há suíte de teste e não há relatório => FALHA. O segundo é exatamente como um gate de disciplina morre.",
+      "parser": "soma TODOS os registros do relatório, nunca só o primeiro — um projeto com registro 1 em 10/10 e registro 2 em 50/90 dá 60% somando e 100% lendo só o primeiro (item 212)",
+      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+    },
+    {
+      "id": "context",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Contexto do projeto preenchido",
+      "prova": "Nenhum placeholder de bootstrap sobrevive depois que o projeto tem overview",
+      "porque": "Um placeholder intacto significa que a decisão que ele deveria carregar não existe em arquivo nenhum — vive só na conversa, que é descartada.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "P-01",
+        "M-12"
+      ],
+      "antiSilencio": "Gatilho conservador: só cobra depois que o artefato de origem existe.",
+      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+    },
+    {
+      "id": "design-tokens",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "Tokens de design: contraste calculado, gamut válido, fonte única",
+      "prova": "Todo par texto/fundo atinge o mínimo de contraste; nenhum token estoura o gamut sRGB; nenhum documento satélite repete o VALOR de um token",
+      "porque": "Medido em execução real: dois tokens estouravam o gamut e uma borda ficou em 1.28. Nenhuma leitura acharia, e nenhum gate olhava. A colisão de luminância entre semânticos (estados distinguíveis só por matiz) é a metade que nem o checklist cobria.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "U-01",
+        "U-02",
+        "U-03",
+        "I-01"
+      ],
+      "antiSilencio": "Sem arquivo de tokens => pula com aviso. Formato não reconhecido => FALHA.",
+      "pendencia": "precisa rodar em projeto real antes de virar bloqueio — mesma régua que a v5 aplicou à política de comentário"
+    },
+    {
+      "id": "task-binding",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "A task citada no commit existe",
+      "prova": "Todo identificador de task no escopo do commit consta do arquivo de tasks",
+      "porque": "Número inventado produz rastreabilidade falsa: o commit parece exemplar, o gate de ordem aprova, e não existe task para auditar contra a spec.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "P-12"
+      ],
+      "antiSilencio": "Arquivo de tasks AUSENTE => avisa e libera (projeto adotado e sprint zero são janelas legítimas). PRESENTE e task não encontrada => bloqueia: só há duas causas, erro de digitação ou invenção.",
+      "pendencia": "no v5 era hook de commit-msg; decidir no v6 se é hook, gate ou ambos"
+    },
+    {
+      "id": "artifact-sections",
+      "numero": null,
+      "status": "candidato",
+      "titulo": "O artefato consumido tem as seções obrigatórias",
+      "prova": "Antes de sintetizar, a fase confere que o artefato de entrada traz as seções que ela lê",
+      "porque": "Medido: faltavam a seção que carrega o modo de operação e a que dispara a geração de contrato de integração. A fase seguinte não tinha como saber que estava lendo um artefato incompleto.",
+      "bloqueia": true,
+      "valvula": null,
+      "invariantes": [
+        "P-19",
+        "P-18"
+      ],
+      "antiSilencio": null,
+      "pendencia": "depende do contrato de memória (policy/memory.json), que ainda não existe"
+    }
+  ]
+}
