@@ -249,7 +249,10 @@ function conferir(dialeto, up, arquivos) {
 
 const IGNORAR_DIR = new Set(['.git', 'node_modules', 'dist', 'build', '.next', 'coverage']);
 
-export async function rodar(raizProjeto, valvula = null) {
+export async function rodar(raizProjeto, opcoes = {}) {
+  // A valvula vem do runner, que e o dono da leitura de `.sdd/`. Gate nao le valvula do
+  // disco: duas fontes para o mesmo fato e como a divergencia comeca (I-01).
+  const valvula = opcoes.valvula ?? null;
   const arquivos = [];
   for await (const rel of caminhar(raizProjeto)) {
     const conteudo = await readFile(join(raizProjeto, rel), 'utf8').catch(() => '');

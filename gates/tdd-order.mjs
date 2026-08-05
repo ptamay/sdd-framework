@@ -123,7 +123,7 @@ export function analisar({ commits = [], baseline = null } = {}) {
 
 // ------------------------------------------------------------------ historico real
 
-export async function rodar(raizProjeto) {
+export async function rodar(raizProjeto, opcoes = {}) {
   let saida;
   try {
     const { stdout } = await exec('git', ['log', '--reverse', '--format=%H%x1f%s'], {
@@ -148,8 +148,7 @@ export async function rodar(raizProjeto) {
       return { hash, mensagem };
     });
 
-  const baseline = (await readFile(join(raizProjeto, '.sdd', 'tdd-baseline'), 'utf8').catch(() => ''))
-    .trim() || null;
+  const baseline = String(opcoes.valvula ?? '').trim() || null;
 
   return analisar({ commits, baseline });
 }

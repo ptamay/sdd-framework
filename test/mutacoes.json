@@ -59,6 +59,38 @@
       "para": "    if (false) {"
     },
     {
+      "gate": "lib/isencoes",
+      "origem": "v5 — os dois casos que fecharam a allowlist do scanner de segredo",
+      "nome": "a isencao deixa de exigir ancora",
+      "efeito": "sem ^ e $, isentar `test/cases/secrets.test.mjs` isenta tambem `vendor/test/cases/secrets.test.mjs` e `...mjs.bak` — a isencao vaza para vizinhos que ninguem revisou",
+      "de": "    if (!caminho.startsWith('^') || !caminho.endsWith('$')) {",
+      "para": "    if (false) {"
+    },
+    {
+      "gate": "lib/isencoes",
+      "origem": "nova — trava que o v5 tinha so como 'nao pode ser .*'",
+      "nome": "a isencao deixa de ser confrontada com os canarios",
+      "efeito": "um padrao largo passa a valer e a varredura inteira some sem quebrar teste nenhum — o relatorio fica verde por nao ter olhado nada",
+      "de": "    const alcancados = CANARIOS.filter((c) => re.test(c));",
+      "para": "    const alcancados = [];"
+    },
+    {
+      "gate": "lib/isencoes",
+      "origem": "nova — nao existe isencao global",
+      "nome": "a isencao deixa de ser filtrada por gate",
+      "efeito": "isentar um arquivo do gate de secrets isenta o mesmo arquivo de TODOS os gates",
+      "de": "    .filter((e) => e?.gate === gate && typeof e.caminho === 'string')",
+      "para": "    .filter((e) => typeof e.caminho === 'string')"
+    },
+    {
+      "gate": "lib/isencoes",
+      "origem": "nova — isencao silenciosa e gate desligado",
+      "nome": "a isencao para de registrar o que isentou",
+      "efeito": "o runner deixa de imprimir o que saiu da varredura, e uma isencao larga fica indistinguivel de um gate que nao achou nada",
+      "de": "      if (casa) usadas.add(caminho);",
+      "para": "      if (false) usadas.add(caminho);"
+    },
+    {
       "gate": "typecheck",
       "origem": "v5 item 255",
       "nome": "o verificador volta a ser invocado uma segunda vez para pegar o texto",

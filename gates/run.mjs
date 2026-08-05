@@ -21,6 +21,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { gatesAtivos, raizDoRepo } from './lib/policy.mjs';
+import { validarIsencoes } from './lib/isencoes.mjs';
 
 const ESTADOS_REPROVA = new Set(['falha', 'erro']);
 const ESTADOS_VALIDOS = new Set(['ok', 'falha', 'erro', 'pulado']);
@@ -66,15 +67,36 @@ async function carregarPadrao(id) {
   return import(new URL(`./${id}.mjs`, import.meta.url).href);
 }
 
-export async function executarTodos({ raiz, carregar = carregarPadrao, valvulas = {} } = {}) {
+export async function executarTodos({
+  raiz,
+  carregar = carregarPadrao,
+  valvulas = {},
+  isencoes = [],
+} = {}) {
   const ativos = await gatesAtivos();
+
+  // Arquivo de isencoes malformado NAO significa "nenhuma isencao". Ele pode estar tentando
+  // isentar alguma coisa e falhando por erro de digitacao — e aceitar isso em silencio faz
+  // o usuario achar que isentou quando nao isentou, ou o contrario. A execucao inteira para.
+  const problemas = validarIsencoes(isencoes, ativos.map((g) => g.id));
+  if (problemas.length > 0) {
+    const resultados = ativos.map((g) => ({
+      id: g.id,
+      numero: g.numero,
+      titulo: g.titulo,
+      estado: 'erro',
+      achados: [],
+      aviso: 'execucao abortada: arquivo de isencoes invalido',
+    }));
+    return { ...agregar(resultados), resultados, problemasDeIsencao: problemas };
+  }
 
   const resultados = await Promise.all(
     ativos.map(async (g) => {
       const base = { id: g.id, numero: g.numero, titulo: g.titulo };
       try {
         const modulo = await carregar(g.id);
-        const bruto = await modulo.rodar(raiz, valvulas[g.id]);
+        const bruto = await modulo.rodar(raiz, { valvula: valvulas[g.id], isencoes });
 
         const problema = validarResultado(bruto);
         if (problema) {
@@ -100,8 +122,14 @@ export async function executarTodos({ raiz, carregar = carregarPadrao, valvulas 
 
 const SIMBOLO = { ok: '[ok]  ', falha: '[FALHA]', erro: '[ERRO] ', pulado: '[pulou]' };
 
-export function formatar({ veredito, resultados, verificados, pulados, reprovados, total }) {
+export function formatar({ veredito, resultados, verificados, pulados, reprovados, total, problemasDeIsencao }) {
   const linhas = [];
+
+  if (problemasDeIsencao?.length) {
+    linhas.push('ARQUIVO DE ISENCOES INVALIDO — nenhum gate rodou:');
+    for (const p of problemasDeIsencao) linhas.push(`  - ${p}`);
+    linhas.push('');
+  }
 
   for (const r of [...resultados].sort((a, b) => a.numero - b.numero)) {
     linhas.push(`${SIMBOLO[r.estado] ?? '[?]'} ${r.numero}. ${r.titulo}`);
@@ -111,6 +139,10 @@ export function formatar({ veredito, resultados, verificados, pulados, reprovado
       linhas.push(`         ${onde ? `${onde} — ` : ''}${a.motivo ?? ''}`);
     }
     if (r.aviso) linhas.push(`         ${r.aviso}`);
+
+    // Trava 5 das isencoes: o que deixou de ser olhado APARECE. Isencao muda em tempo de
+    // execucao e indistinguivel de gate desligado — foi o que sobrou do conserto do v5.
+    for (const c of r.isentos ?? []) linhas.push(`         isento: ${c}`);
     if (r.saida) linhas.push(indentar(r.saida));
   }
 
@@ -145,6 +177,22 @@ const VALVULAS = {
   'tdd-order': 'tdd-baseline',
 };
 
+/**
+ * Le `.sdd/gates-ignore.json`.
+ *
+ * Ausente e o normal. PRESENTE e ilegivel nao pode virar "nenhuma isencao": o arquivo
+ * existe porque alguem quis isentar algo, e falhar em silencio esconde exatamente isso.
+ */
+export async function lerIsencoes(raiz) {
+  const bruto = await readFile(join(raiz, '.sdd', 'gates-ignore.json'), 'utf8').catch(() => null);
+  if (bruto === null) return [];
+  try {
+    return JSON.parse(bruto).isencoes ?? [];
+  } catch (erro) {
+    return [{ _invalido: `gates-ignore.json com JSON invalido: ${erro.message}` }];
+  }
+}
+
 export async function lerValvulas(raiz) {
   const lidas = {};
   for (const [gate, arquivo] of Object.entries(VALVULAS)) {
@@ -177,7 +225,8 @@ export function ehEntradaDireta(metaUrl, argv1) {
 if (ehEntradaDireta(import.meta.url, process.argv[1])) {
   const raiz = process.argv[2] ?? process.cwd();
   const valvulas = await lerValvulas(raiz);
-  const relatorio = await executarTodos({ raiz, valvulas });
+  const isencoes = await lerIsencoes(raiz);
+  const relatorio = await executarTodos({ raiz, valvulas, isencoes });
 
   console.log(formatar(relatorio));
   process.exit(codigoDeSaida(relatorio.veredito));

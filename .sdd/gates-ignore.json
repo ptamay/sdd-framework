@@ -1,0 +1,16 @@
+{
+  "_": "Isencoes de gate DESTE repositorio. Este arquivo e a lista do que os gates deixam de olhar — a superficie mais perigosa do framework. Cinco travas o defendem, todas verificadas em test/cases/isencoes.test.mjs: ancorada (^ e $), estreita (nao pode alcancar nenhum canario de codigo comum), por gate (nao existe isencao global), justificada (motivo escrito) e visivel (o runner imprime o que foi isentado). Arquivo malformado ABORTA a execucao inteira — nunca vira 'nenhuma isencao'.",
+
+  "isencoes": [
+    {
+      "gate": "secrets",
+      "caminho": "^test/cases/secrets\\.test\\.mjs$",
+      "porque": "Este arquivo hospeda credenciais FALSAS no formato real, de proposito: um sk_live_ que nao case o padrao do Stripe nao testa nada. E o mesmo caso que o v5 tratou isentando apenas o proprio autoteste na allowlist do scanner de segredo. Consequencia aceita e declarada: um segredo REAL colado neste arquivo nao seria pego por este gate."
+    },
+    {
+      "gate": "imports",
+      "caminho": "^test/cases/imports\\.test\\.mjs$",
+      "porque": "Este arquivo importa pacotes inexistentes de proposito — 'pacote-alucinado', 'seja-o-que-for' — porque e assim que se prova que o gate anti-alucinacao acusa. Consequencia aceita: um import de verdade quebrado neste arquivo nao seria pego pelo gate, e sim pela propria suite ao rodar."
+    }
+  ]
+}

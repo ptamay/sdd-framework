@@ -46,6 +46,10 @@ try {
   await cp(join(RAIZ, 'package.json'), join(banco, 'package.json'));
 
   for (const m of mutacoes) {
+    // `gate` aceita caminho relativo dentro de `gates/` (ex.: "lib/isencoes"), porque
+    // modulo compartilhado tambem carrega defeito historico — e o de isencoes carrega o
+    // mais perigoso de todos: a lista do que os gates deixam de olhar.
+    const suiteId = m.gate.split('/').pop();
     const original = await readFile(join(RAIZ, 'gates', `${m.gate}.mjs`), 'utf8');
     const mutado = original.replace(m.de, m.para);
 
@@ -61,7 +65,7 @@ try {
     }
 
     await writeFile(join(banco, 'gates', `${m.gate}.mjs`), mutado);
-    const caidos = await rodarSuite(join(banco, 'test', 'cases', `${m.gate}.test.mjs`));
+    const caidos = await rodarSuite(join(banco, 'test', 'cases', `${suiteId}.test.mjs`));
     await writeFile(join(banco, 'gates', `${m.gate}.mjs`), original);
 
     if (caidos.length === 0) {

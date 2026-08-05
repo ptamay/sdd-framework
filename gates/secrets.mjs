@@ -14,6 +14,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 
+import { compilarIsencoes } from './lib/isencoes.mjs';
+
 // Palavras que tornam um identificador sensivel. Comparadas contra o identificador PARTIDO
 // em palavras (camelCase e snake_case), nunca contra a string crua: e o que separa `token`
 // de `tokenizer` sem precisar de lista de excecao.
@@ -146,16 +148,20 @@ const VARRER = /\.(js|jsx|mjs|cjs|ts|tsx|py|rb|go|rs|java|php|json|ya?ml|toml|in
  * Lista de EXCLUSAO a partir da raiz, nunca de inclusao: o desconhecido tem de ser varrido,
  * nao ignorado (item 208 — `pages/` do Next.js era invisivel para o gate de imports).
  */
-export async function rodar(raiz) {
+export async function rodar(raiz, opcoes = {}) {
+  const isencao = compilarIsencoes(opcoes.isencoes ?? [], 'secrets');
   const achados = [];
   let varridos = 0;
 
   for await (const rel of arquivos(raiz)) {
+    if (isencao.isento(rel)) continue;
     const texto = await readFile(join(raiz, rel), 'utf8').catch(() => null);
     if (texto === null) continue;
     varridos++;
     achados.push(...analisar(rel, texto));
   }
+
+  const isentos = isencao.aplicadas();
 
   // Anti-silencio: zero arquivo varrido nao e "nenhum segredo encontrado".
   if (varridos === 0) {
@@ -163,10 +169,11 @@ export async function rodar(raiz) {
       estado: 'pulado',
       achados: [],
       aviso: 'nenhum arquivo varrivel encontrado — nada foi conferido',
+      isentos,
     };
   }
 
-  return { estado: achados.length ? 'falha' : 'ok', achados, aviso: null };
+  return { estado: achados.length ? 'falha' : 'ok', achados, aviso: null, isentos };
 }
 
 async function* arquivos(raiz, prefixo = '') {

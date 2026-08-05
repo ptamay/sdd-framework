@@ -160,7 +160,7 @@ export function analisar({ relatorios = [], minimo = minimoPadrao, temSuite = fa
 const DIR_RELATORIO = ['coverage', '.coverage', 'htmlcov', 'reports'];
 const TESTE = /(\.(test|spec)\.[jt]sx?$|(^|\/)(tests?|__tests__)\/)/i;
 
-export async function rodar(raizProjeto) {
+export async function rodar(raizProjeto, opcoes = {}) {
   const relatorios = [];
   for (const dir of DIR_RELATORIO) {
     for await (const rel of caminhar(join(raizProjeto, dir), dir)) {
@@ -175,7 +175,7 @@ export async function rodar(raizProjeto) {
 
   const temSuite = await procuraSuite(raizProjeto);
 
-  const bruto = (await readFile(join(raizProjeto, '.sdd', 'coverage-min'), 'utf8').catch(() => '')).trim();
+  const bruto = String(opcoes.valvula ?? '').trim();
   const minimo = bruto === '' ? minimoPadrao : bruto === 'none' ? 'none' : Number(bruto);
 
   return analisar({ relatorios, minimo, temSuite });

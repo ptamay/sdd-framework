@@ -18,6 +18,8 @@ import { readFile, readdir } from 'node:fs/promises';
 import { builtinModules } from 'node:module';
 import { join } from 'node:path';
 
+import { compilarIsencoes } from './lib/isencoes.mjs';
+
 const BUILTINS = new Set(builtinModules);
 
 const JS = /\.(js|jsx|mjs|cjs|ts|tsx|mts|cts)$/i;
@@ -139,9 +141,11 @@ export function analisar({ arquivos = [], manifesto = null } = {}) {
 
 // ------------------------------------------------------------------ varredura
 
-export async function rodar(raizProjeto) {
+export async function rodar(raizProjeto, opcoes = {}) {
+  const isencao = compilarIsencoes(opcoes.isencoes ?? [], 'imports');
   const arquivos = [];
   for await (const rel of caminhar(raizProjeto)) {
+    if (isencao.isento(rel)) continue;
     const conteudo = await readFile(join(raizProjeto, rel), 'utf8').catch(() => '');
     arquivos.push({ caminho: rel, conteudo });
   }
@@ -153,7 +157,7 @@ export async function rodar(raizProjeto) {
     manifesto = null; // tratado como estado `erro` em analisar(), nunca como "nada faltando"
   }
 
-  return analisar({ arquivos, manifesto });
+  return { ...analisar({ arquivos, manifesto }), isentos: isencao.aplicadas() };
 }
 
 async function* caminhar(raizProjeto, prefixo = '') {
