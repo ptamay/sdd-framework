@@ -72,6 +72,11 @@ export function extrairImports(caminho, texto) {
 /** Especificador que nao aponta para pacote publicado. */
 function ehLocal(especificador) {
   return (
+    // Especificador com interpolacao nao e resolvivel estaticamente: o nome do pacote so
+    // existe em tempo de execucao. Acusar `${nome}` de alucinacao e reprovar quem esta
+    // certo (M-02). Apareceu na primeira execucao real, contra os proprios casos deste
+    // gate, que montam especificadores em laco.
+    especificador.includes('${') ||
     especificador.startsWith('.') ||        // relativo
     especificador.startsWith('/') ||        // absoluto
     especificador.startsWith('#') ||        // subpath imports do package.json

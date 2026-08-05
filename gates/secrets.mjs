@@ -148,12 +148,25 @@ const VARRER = /\.(js|jsx|mjs|cjs|ts|tsx|py|rb|go|rs|java|php|json|ya?ml|toml|in
  */
 export async function rodar(raiz) {
   const achados = [];
+  let varridos = 0;
+
   for await (const rel of arquivos(raiz)) {
     const texto = await readFile(join(raiz, rel), 'utf8').catch(() => null);
     if (texto === null) continue;
+    varridos++;
     achados.push(...analisar(rel, texto));
   }
-  return achados;
+
+  // Anti-silencio: zero arquivo varrido nao e "nenhum segredo encontrado".
+  if (varridos === 0) {
+    return {
+      estado: 'pulado',
+      achados: [],
+      aviso: 'nenhum arquivo varrivel encontrado — nada foi conferido',
+    };
+  }
+
+  return { estado: achados.length ? 'falha' : 'ok', achados, aviso: null };
 }
 
 async function* arquivos(raiz, prefixo = '') {
