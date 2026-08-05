@@ -18,14 +18,56 @@
 // O executor e injetavel porque a propriedade central e INVISIVEL na saida: rodar uma ou
 // duas vezes imprime o mesmo texto. So um teste de comportamento pega.
 
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, access } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { join } from 'node:path';
 
-const FERRAMENTAS = {
-  tsc: { comando: 'npx', args: ['--no-install', 'tsc', '--noEmit'] },
-  mypy: { comando: 'mypy', args: ['.'] },
-};
+/**
+ * Resolve COMO invocar o verificador, sem passar por lancador de pacote.
+ *
+ * Medido na primeira prova em projeto real, e o achado mais grave da Fase E:
+ *
+ *   execFile('npx', ...)      -> ENOENT em Windows. Nome sem extensao nao resolve sem PATHEXT.
+ *   execFile('npx.cmd', ...)  -> EINVAL. O Node 20+ recusa spawn de .cmd/.bat sem shell
+ *                                (correcao do CVE-2024-27980).
+ *
+ * Ou seja: o gate NUNCA poderia rodar em Windows. Todo usuario veria "verificador nao pode
+ * ser executado" para sempre — um erro permanente reprovando toda execucao. Nenhuma leitura
+ * acharia isso; so rodar acha.
+ *
+ * A saida e nao depender de lancador nenhum. O `tsc` do TypeScript e um script Node: roda-se
+ * com o proprio executavel do Node, que ja esta em `process.execPath` e nao precisa de shell,
+ * de PATHEXT nem de resolucao por nome.
+ */
+export async function resolverComando(ferramenta, raizProjeto) {
+  if (ferramenta === 'tsc') {
+    for (const relativo of [
+      ['node_modules', 'typescript', 'bin', 'tsc'],
+      ['node_modules', '.bin', 'tsc.js'],
+    ]) {
+      const script = join(raizProjeto, ...relativo);
+      if (await existe(script)) {
+        return { comando: process.execPath, args: [script, '--noEmit'] };
+      }
+    }
+    return null;
+  }
+
+  if (ferramenta === 'mypy') {
+    // `python -m mypy` evita o mesmo problema: o executavel do interpretador resolve, o
+    // wrapper do pacote nao necessariamente.
+    return {
+      comando: process.platform === 'win32' ? 'python' : 'python3',
+      args: ['-m', 'mypy', '.'],
+    };
+  }
+
+  return null;
+}
+
+async function existe(caminho) {
+  return access(caminho).then(() => true, () => false);
+}
 
 // ------------------------------------------------------------------ deteccao
 
@@ -114,11 +156,23 @@ export async function rodar(raizProjeto, opcoes = {}) {
     };
   }
 
-  const { comando, args } = FERRAMENTAS[deteccao.ferramenta];
+  const alvo = opcoes.comando ?? (await resolverComando(deteccao.ferramenta, raizProjeto));
+
+  if (!alvo) {
+    // O projeto DECLARA ser tipado e o verificador nao esta instalado. Nada foi conferido —
+    // e dizer `ok` aqui seria o falso verde. Mensagem acionavel, nao generica.
+    return {
+      estado: 'erro',
+      achados: [],
+      saida: '',
+      aviso: `${deteccao.ferramenta} esta configurado no projeto mas nao instalado — os tipos NAO foram verificados`,
+      ferramenta: deteccao.ferramenta,
+    };
+  }
 
   // UMA invocacao. O resultado inteiro — status, texto e falha de spawn — sai daqui, e nada
   // abaixo pode invocar de novo para "pegar a mensagem".
-  const resultado = await executar(comando, args);
+  const resultado = await executar(alvo.comando, alvo.args);
 
   return {
     ...interpretar({ ...resultado, ferramenta: deteccao.ferramenta }),

@@ -14,8 +14,14 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-import { detectar, interpretar, rodar } from '../../gates/typecheck.mjs';
+import { detectar, interpretar, rodar, resolverComando } from '../../gates/typecheck.mjs';
+
+// Comando ja resolvido: separa o que este bloco mede (invocacao) do que a resolucao mede.
+const TSC_FALSO = { comando: 'tsc-de-mentira', args: ['--noEmit'] };
 
 const arq = (caminho, conteudo = '') => ({ caminho, conteudo });
 
@@ -74,7 +80,7 @@ test('falha de spawn NAO e "sem erros de tipo"', () => {
 
 test('o verificador e invocado UMA vez quando passa', async () => {
   const { executar, chamadas } = espiao({ codigo: 0, saida: '' });
-  await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' } });
+  await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' }, comando: TSC_FALSO });
   assert.equal(chamadas.length, 1);
 });
 
@@ -82,7 +88,7 @@ test('o verificador e invocado UMA vez quando FALHA — este e o item 255', asyn
   // O caminho que o v5 pagava em dobro: quem ja estava com problema rodava o gate mais
   // caro duas vezes. Nenhum dos dois caminhos pode invocar mais de uma vez.
   const { executar, chamadas } = espiao({ codigo: 2, saida: 'error TS2322' });
-  const r = await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' } });
+  const r = await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' }, comando: TSC_FALSO });
   assert.equal(chamadas.length, 1, `invocou ${chamadas.length} vezes no caminho de falha`);
   assert.equal(r.estado, 'falha');
 });
@@ -90,7 +96,7 @@ test('o verificador e invocado UMA vez quando FALHA — este e o item 255', asyn
 test('a saida reportada e exatamente a da invocacao que decidiu', async () => {
   const texto = 'error TS1005: expected ;';
   const { executar } = espiao({ codigo: 2, saida: texto });
-  const r = await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' } });
+  const r = await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' }, comando: TSC_FALSO });
   assert.equal(r.saida, texto);
 });
 
@@ -108,7 +114,33 @@ test('verificador CONFIGURADO mas ausente na maquina => erro, nunca ok', async (
   // Mesma familia do "ha suite de teste e nao ha relatorio" do gate de cobertura. O projeto
   // declara ser tipado e nada foi conferido — dizer ✅ ali e o falso verde.
   const { executar } = espiao({ codigo: null, saida: '', erroDeSpawn: 'ENOENT' });
-  const r = await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' } });
+  const r = await rodar('/projeto', { executar, deteccao: { ferramenta: 'tsc' }, comando: TSC_FALSO });
   assert.equal(r.estado, 'erro');
   assert.match(r.aviso, /tsc|verificador/i);
+});
+
+// --------------------------------------------------------------------- resolucao (Fase E)
+
+test('a invocacao NUNCA passa por lancador de pacote resolvido por nome', async () => {
+  // Achado da primeira prova em projeto real, e o mais grave da Fase E:
+  //   execFile('npx', ...)     -> ENOENT em Windows (nome sem extensao nao resolve)
+  //   execFile('npx.cmd', ...) -> EINVAL (Node 20+ recusa .cmd sem shell, CVE-2024-27980)
+  // O gate nunca teria rodado em Windows: erro permanente, reprovando toda execucao.
+  const raiz = await mkdtemp(join(tmpdir(), 'sdd-tsc-'));
+  await mkdir(join(raiz, 'node_modules', 'typescript', 'bin'), { recursive: true });
+  await writeFile(join(raiz, 'node_modules', 'typescript', 'bin', 'tsc'), 'process.exit(0);\n');
+
+  const alvo = await resolverComando('tsc', raiz);
+  assert.equal(alvo.comando, process.execPath, 'nao usou o executavel do Node');
+  assert.doesNotMatch(alvo.comando, /npx/i);
+  assert.ok(alvo.args[0].endsWith('tsc'), 'nao apontou para o script do verificador');
+});
+
+test('verificador declarado e NAO instalado devolve erro acionavel', async () => {
+  const raiz = await mkdtemp(join(tmpdir(), 'sdd-tsc-'));
+  assert.equal(await resolverComando('tsc', raiz), null);
+
+  const r = await rodar(raiz, { deteccao: { ferramenta: 'tsc' } });
+  assert.equal(r.estado, 'erro');
+  assert.match(r.aviso, /nao instalado|não instalado/i);
 });

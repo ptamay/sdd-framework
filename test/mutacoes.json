@@ -95,8 +95,8 @@
       "origem": "v5 item 255",
       "nome": "o verificador volta a ser invocado uma segunda vez para pegar o texto",
       "efeito": "quem ja esta com problema paga o dobro no gate mais caro, e os dois processos podem ver arvores diferentes — o erro IMPRESSO deixa de ser o que reprovou",
-      "de": "  const resultado = await executar(comando, args);",
-      "para": "  const resultado = await executar(comando, args);\n  if (resultado.codigo !== 0) resultado.saida = (await executar(comando, args)).saida;"
+      "de": "  const resultado = await executar(alvo.comando, alvo.args);",
+      "para": "  const resultado = await executar(alvo.comando, alvo.args);\n  if (resultado.codigo !== 0) resultado.saida = (await executar(alvo.comando, alvo.args)).saida;"
     },
     {
       "gate": "typecheck",

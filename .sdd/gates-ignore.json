@@ -1,6 +1,5 @@
 {
   "_": "Isencoes de gate DESTE repositorio. Este arquivo e a lista do que os gates deixam de olhar — a superficie mais perigosa do framework. Cinco travas o defendem, todas verificadas em test/cases/isencoes.test.mjs: ancorada (^ e $), estreita (nao pode alcancar nenhum canario de codigo comum), por gate (nao existe isencao global), justificada (motivo escrito) e visivel (o runner imprime o que foi isentado). Arquivo malformado ABORTA a execucao inteira — nunca vira 'nenhuma isencao'.",
-
   "isencoes": [
     {
       "gate": "secrets",
@@ -11,6 +10,16 @@
       "gate": "imports",
       "caminho": "^test/cases/imports\\.test\\.mjs$",
       "porque": "Este arquivo importa pacotes inexistentes de proposito — 'pacote-alucinado', 'seja-o-que-for' — porque e assim que se prova que o gate anti-alucinacao acusa. Consequencia aceita: um import de verdade quebrado neste arquivo nao seria pego pelo gate, e sim pela propria suite ao rodar."
+    },
+    {
+      "gate": "secrets",
+      "caminho": "^test/projeto\\.mjs$",
+      "porque": "Bancada da prova de execucao: monta um projeto DOENTE com uma credencial falsa e um bypass de ambiente plantados, porque e assim que se prova que os gates disparam ponta a ponta. Consequencia aceita: um segredo real colado neste arquivo nao seria pego por este gate."
+    },
+    {
+      "gate": "imports",
+      "caminho": "^test/projeto\\.mjs$",
+      "porque": "Este arquivo EMITE codigo-fonte como dado: as linhas de import dentro dele sao strings que compoem o projeto de prova, nao imports deste modulo. E a consequencia declarada de o extrator nao ter parser — um parser de verdade custaria uma dependencia, e este gate nao tem nenhuma. Consequencia aceita: um import quebrado deste proprio arquivo nao seria pego pelo gate, e sim pela suite ao carrega-lo."
     }
   ]
 }
