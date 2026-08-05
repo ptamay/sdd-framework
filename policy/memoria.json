@@ -1,0 +1,63 @@
+{
+  "_": "Contrato do Memory Bank. FONTE UNICA: skill, agente e gate leem daqui — nenhum repete a lista, os nomes ou as secoes. No v5 o caminho do arquivo de tasks divergia entre a instrucao fina e a referencia, e o hook que validava a task caia no ramo 'arquivo nao existe, aviso' pelo projeto inteiro, em silencio.",
+
+  "raiz": ".sdd/memory",
+
+  "arquivos": [
+    {
+      "id": "overview",
+      "arquivo": "overview.md",
+      "nasce": "escopo",
+      "guarda": "o que o cliente disse, formatado — nunca interpretado",
+      "regra": "DADO CITADO. Este arquivo so FORMATA material de terceiro. Nao inventar e nao INTERPRETAR sao coisas diferentes de nao PERDER: o que nao cabe nas secoes fixas vai para o deposito verbatim.",
+      "secoes": ["Procedencia", "Regras e detalhes declarados", "Premissas inferidas"],
+      "porque": "Medido no v5: tres regras de negocio explicitas do briefing nao sobreviveram a fase de ingestao porque nao eram funcionalidade, nem restricao, nem integracao — nao tinham onde morar. O deposito e a casa delas."
+    },
+    {
+      "id": "constitution",
+      "arquivo": "constitution.md",
+      "nasce": "arquitetura",
+      "guarda": "a lei do projeto — o que nenhuma sprint pode violar",
+      "regra": "LEI MAXIMA. Ausente, nao se gera codigo: pare e rode a rota de arquitetura. Alteracao so por change request; a secao de estado corrente e a unica que o ciclo de sprint atualiza.",
+      "secoes": ["Invariantes", "Seguranca", "Estado Atual"]
+    },
+    {
+      "id": "spec",
+      "arquivo": "spec.md",
+      "nasce": "arquitetura",
+      "guarda": "requisitos numerados e a matriz de privilegio por papel",
+      "regra": "Todo requisito em EARS. Fluxo critico exige ao menos um padrao SE...ENTAO — vibe coding nao erra no caminho feliz, erra no caminho de erro que ninguem escreveu.",
+      "secoes": ["Requisitos", "Matriz de privilegios", "Changelog"],
+      "autoridades": {
+        "matriz de privilegios": "privilegio sobre ENTIDADE — o que um papel pode ler ou escrever",
+        "tabela de rotas": "SUPERFICIE — que telas existem para cada papel"
+      },
+      "porque": "Os dois eixos acima nao derivam um do outro. Ter leitura sobre uma entidade nao implica ter listagem dela: o dado pode ser exercido dentro de outra superficie. Derivar navegacao da matriz EXPANDE superficie alem da necessidade — medido no v5, transformaria 've o nome de quem atende' em 'tem diretorio navegavel de dados pessoais'."
+    },
+    {
+      "id": "plan",
+      "arquivo": "plan.md",
+      "nasce": "arquitetura",
+      "guarda": "stack aprovada, mapa de modulos, sprint e task ativa",
+      "regra": "A task ativa daqui MANDA. Nunca troque a task ativa por pedido de chat — redirecione para a rota de change request.",
+      "secoes": ["Stack aprovada", "Arquitetura de modulos", "Sprint ativa", "Backlog"]
+    },
+    {
+      "id": "tasks",
+      "arquivo": "tasks.md",
+      "nasce": "sprint",
+      "guarda": "as tasks da sprint, com criterio de aceite",
+      "regra": "Casa unica das tasks. O identificador citado num commit precisa existir aqui — e a metade mecanizavel do vinculo entre commit e escopo.",
+      "secoes": ["Tasks"]
+    }
+  ],
+
+  "valvulas": [
+    { "arquivo": ".sdd/coverage-min", "gate": "coverage", "formato": "inteiro de 1 a 100, ou a palavra none" },
+    { "arquivo": ".sdd/tdd-baseline", "gate": "tdd-order", "formato": "hash de commit a partir do qual a ordem e auditada" },
+    { "arquivo": ".sdd/migrations-layout", "gate": "migrations", "formato": "o dialeto declarado" },
+    { "arquivo": ".sdd/gates-ignore.json", "gate": "todos", "formato": "lista de isencoes ancoradas, por gate, com motivo escrito" }
+  ],
+
+  "_valvulas": "Toda valvula e VISIVEL num diff, e essa e a razao de ser arquivo em vez de flag. Baixar a regua conscientemente e decisao registrada; contornar o gate e divida invisivel."
+}

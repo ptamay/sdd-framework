@@ -1,0 +1,72 @@
+#!/usr/bin/env node
+// Imprime o contrato de uma rota, montado a partir de `policy/`.
+//
+//   sdd-rota <id>        sdd-rota sprint
+//   sdd-rota             lista as rotas
+//
+// Existe para que as skills nao REPITAM o processo. Um SKILL.md que descreve as regras da
+// rota vira a quinta copia do mesmo fato — e foi assim que o v5 chegou a ter tres formas
+// diferentes de criterio de aceite em tres pontos do MESMO ciclo, nenhuma delas quebrando
+// teste. Aqui a skill tem uma frase e um comando; o conteudo vem do catalogo.
+
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+import { raizDoRepo, gatesAtivos } from '../gates/lib/policy.mjs';
+
+const RAIZ = raizDoRepo();
+const ler = async (nome) => JSON.parse(await readFile(join(RAIZ, 'policy', nome), 'utf8'));
+
+const { rotas, estagios, _prova_de_leitura } = await ler('rotas.json');
+const memoria = await ler('memoria.json');
+
+const alvo = process.argv[2];
+
+if (!alvo) {
+  console.log('Rotas — todo pedido entra por UMA delas:\n');
+  for (const r of rotas) console.log(`  ${r.id.padEnd(16)} ${r.quando}`);
+  console.log('\nDetalhe:  sdd-rota <id>');
+  process.exit(0);
+}
+
+const rota = rotas.find((r) => r.id === alvo);
+if (!rota) {
+  console.error(`rota desconhecida: "${alvo}"`);
+  console.error(`conhecidas: ${rotas.map((r) => r.id).join(', ')}`);
+  process.exit(1);
+}
+
+const estagio = estagios.find((e) => e.id === rota.estagio);
+
+console.log(`# Rota: ${rota.id}\n`);
+console.log(`**Quando:** ${rota.quando}`);
+console.log(`**Estagio:** ${rota.estagio} — fecha quando ${estagio?.fecha_quando ?? '—'}\n`);
+
+console.log('## Prova de leitura\n');
+console.log(`${_prova_de_leitura}\n`);
+
+if (rota.entrega.length) {
+  console.log('## Entrega\n');
+  for (const id of rota.entrega) {
+    const a = memoria.arquivos.find((x) => x.id === id);
+    if (!a) continue;
+    console.log(`### \`${memoria.raiz}/${a.arquivo}\`\n`);
+    console.log(`${a.guarda}\n`);
+    console.log(`- **Regra:** ${a.regra}`);
+    console.log(`- **Secoes obrigatorias:** ${a.secoes.map((s) => `\`## ${s}\``).join(' · ')}`);
+    if (a.autoridades) {
+      console.log('- **Autoridade de cada tabela** (uma NAO deriva a outra):');
+      for (const [k, v] of Object.entries(a.autoridades)) console.log(`  - ${k}: ${v}`);
+    }
+    if (a.porque) console.log(`- **Por que:** ${a.porque}`);
+    console.log('');
+  }
+}
+
+console.log('## Regras desta rota\n');
+for (const r of rota.regras) console.log(`- ${r}`);
+
+console.log('\n## Gates que valem aqui\n');
+for (const g of await gatesAtivos()) console.log(`${g.numero}. ${g.titulo}`);
+console.log('\nRode `sdd-gates` antes de merge ou push. Falha = pare e reporte; nao contorne.');
+console.log('`pulado` nao e aprovacao — o relatorio diz quantos de fato verificaram.');

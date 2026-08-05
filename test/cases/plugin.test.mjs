@@ -101,7 +101,19 @@ test('o que o git entrega e LF — CRLF no shebang quebra o executavel', async (
   //
   // A verificacao olha o BLOB do git (o que um clone recebe), nao a copia de trabalho:
   // em Windows a copia local pode ter CRLF legitimamente.
-  for (const alvo of ['bin/sdd-gates', 'hooks/guard.mjs', 'hooks/contexto.mjs']) {
+  //
+  // Cobre skills e agentes tambem, e isso saiu de um defeito real: o frontmatter YAML dos
+  // sub-agentes nasceu em CRLF e o parser de frontmatter simplesmente NAO RECONHECEU o
+  // bloco — o agente carregaria sem `tools:` e sem `model:`, isto e, sem a restricao de
+  // ferramenta que e a razao de ele existir. Dois casos vizinhos passaram mesmo assim,
+  // porque o regex deles tolerava o `\r`: aprovaram pelo motivo errado (M-09).
+  const { stdout: lista } = await exec(
+    'git',
+    ['ls-files', 'bin', 'hooks', 'skills', 'agents'],
+    { cwd: RAIZ },
+  );
+
+  for (const alvo of lista.split('\n').filter(Boolean)) {
     const { stdout } = await exec('git', ['show', `:${alvo}`], { cwd: RAIZ });
     assert.equal(stdout.includes('\r'), false, `${alvo} entra no git com CRLF`);
   }
