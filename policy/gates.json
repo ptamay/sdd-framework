@@ -116,8 +116,8 @@
     },
     {
       "id": "coverage",
-      "numero": null,
-      "status": "candidato",
+      "numero": 5,
+      "status": "ativo",
       "titulo": "Cobertura de teste medida acima do mínimo",
       "prova": "Relatório de cobertura lido e comparado com o mínimo declarado",
       "porque": "Enquanto isso viveu só no checklist de Definition of Done, era um [x] marcado por quem escreveu o código. Item de checklist não mede nada.",
@@ -130,7 +130,8 @@
       ],
       "antiSilencio": "Formato de relatório não reconhecido => FALHA. Há suíte de teste e não há relatório => FALHA. O segundo é exatamente como um gate de disciplina morre.",
       "parser": "soma TODOS os registros do relatório, nunca só o primeiro — um projeto com registro 1 em 10/10 e registro 2 em 50/90 dá 60% somando e 100% lendo só o primeiro (item 212)",
-      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+      "minimoPadrao": 80,
+      "valvulaFormato": "inteiro de 1 a 100, ou a palavra \"none\". Valor invalido FALHA — cair no padrao em silencio faz o usuario achar que baixou a regua quando nao baixou."
     },
     {
       "id": "context",

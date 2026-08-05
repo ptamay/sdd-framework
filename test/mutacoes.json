@@ -57,6 +57,30 @@
       "efeito": "a valvula desliga o gate em silencio e ele segue imprimindo que conferiu",
       "de": "    if (i === -1) {",
       "para": "    if (false) {"
+    },
+    {
+      "gate": "coverage",
+      "origem": "v5 item 212",
+      "nome": "o parser de lcov para de acumular os registros",
+      "efeito": "um projeto com 10/10 num arquivo e 50/90 noutro reporta 100% em vez de 60% — a versao ingenua passa com FOLGA justamente no projeto mal coberto",
+      "de": "      total += Number(lf[1]);",
+      "para": "      total = Number(lf[1]);"
+    },
+    {
+      "gate": "coverage",
+      "origem": "v5 item 212 (o anti-silencio que decide se o gate sobrevive)",
+      "nome": "\"ha suite e nao ha relatorio\" deixa de ser falha",
+      "efeito": "o projeto para de gerar relatorio, o gate segue verde e ninguem descobre que ele parou de medir",
+      "de": "    if (temSuite) {",
+      "para": "    if (false) {"
+    },
+    {
+      "gate": "coverage",
+      "origem": "nova — classe da valvula fantasma",
+      "nome": "valvula invalida cai no padrao em silencio",
+      "efeito": "o usuario acha que baixou a regua e nao baixou — ou pior, acha que a subiu",
+      "de": "  if (!Number.isInteger(n) || n < 1 || n > 100) {",
+      "para": "  if (false) {"
     }
   ]
 }
