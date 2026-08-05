@@ -23,8 +23,8 @@
     },
     {
       "id": "migrations",
-      "numero": null,
-      "status": "candidato",
+      "numero": 2,
+      "status": "ativo",
       "titulo": "Todo UP tem DOWN real, na forma do dialeto",
       "prova": "Cada migration de subida tem rollback correspondente, com corpo não-vazio, na convenção do dialeto detectado",
       "porque": "Migration sem rollback é a mudança que não se desfaz às 3h da manhã. E 'tem uma função down()' não é rollback: o gerador de vários dialetos emite o stub vazio por template.",
@@ -44,8 +44,7 @@
         "jsmig",
         "mongo",
         "none"
-      ],
-      "pendencia": "aguarda implementacao — entra como ativo, com numero, no commit que traz gates/<id>.mjs e seus casos"
+      ]
     },
     {
       "id": "secrets",
