@@ -160,6 +160,33 @@
       "efeito": "todo projeto criado pelo bootstrap nasce REPROVADO, por um defeito que nenhuma fixture de gate ve — foi assim que a versao anterior entregou projetos reprovados de fabrica por tres versoes",
       "de": "    if (/does not have any commits|unknown revision|bad default revision|ambiguous argument/i.test(texto)) {",
       "para": "    if (false) {"
+    },
+    {
+      "arquivo": "agents/memory-agent.md",
+      "suite": "metadata",
+      "origem": "v6 2026-08-05 — cometido em SEIS arquivos e vivo ate ser achado por `claude plugin validate`",
+      "nome": "a description volta a ficar sem aspas com \": \" dentro",
+      "efeito": "o YAML le \"a: b: c\" como mapeamento aninhado, o parse do BLOCO INTEIRO cai, e o agente carrega com metadata vazia: sem tools, sem model, sem description. Nada avisa — e a suite inteira passava, porque o unico caso que guardava isso lia o texto cru do arquivo",
+      "de": "description: \"Encerra a sprint: atualiza o estado na memoria do projeto, registra as metricas e faz o commit de encerramento.\"",
+      "para": "description: Encerra a sprint: atualiza o estado na memoria do projeto, registra as metricas e faz o commit de encerramento."
+    },
+    {
+      "arquivo": "agents/review-agent.md",
+      "suite": "rotas",
+      "origem": "v5 — a falha que motivou fixar a camada na definicao do agente",
+      "nome": "o agente que audita cai de camada",
+      "efeito": "a auditoria de sprint passa a rodar em esforco baixo. E o modo de falha mais caro do framework: o julgamento que ninguem confere depois com o mesmo cuidado passa a ser feito pelo modelo mais barato, e o relatorio continua com a mesma cara",
+      "de": "model: opus",
+      "para": "model: haiku"
+    },
+    {
+      "arquivo": "agents/review-agent.md",
+      "suite": "rotas",
+      "origem": "v6 2026-08-05 — a combinacao exata que estava viva e que a suite nao via",
+      "nome": "o revisor perde as aspas na description, com a linha `model: opus` INTACTA",
+      "efeito": "o bloco inteiro deixa de parsear e o revisor carrega sem model — auditoria em camada indefinida. A versao anterior deste caso casava /^model:\\s*opus\\s*$/m contra o texto cru e passava: a linha estava la, o campo nao. E a prova de que o caso guardava a aparencia do invariante, nao o invariante (M-09)",
+      "de": "description: \"Audita a sprint: conformidade com a spec, deriva de requisito, alucinacao e o que nenhum gate mede. Reporta achados; NAO corrige.\"",
+      "para": "description: Audita a sprint: conformidade com a spec, deriva de requisito, alucinacao e o que nenhum gate mede. Reporta achados; NAO corrige."
     }
   ]
 }

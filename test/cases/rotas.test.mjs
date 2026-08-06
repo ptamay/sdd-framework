@@ -18,6 +18,7 @@ import { promisify } from 'node:util';
 import { join } from 'node:path';
 
 import { raizDoRepo } from '../../gates/lib/policy.mjs';
+import { lerFrontmatter } from '../frontmatter.mjs';
 
 const exec = promisify(execFile);
 const RAIZ = raizDoRepo();
@@ -204,6 +205,21 @@ test('a tabela aloca CAMADAS, nunca versoes de modelo', async () => {
 test('o agente que AUDITA nao pode cair de camada', async () => {
   // A auditoria do v5 falhou por esforco baixo, e foi essa falha que motivou fixar a camada
   // na definicao do agente em vez de deixa-la como recomendacao em prosa.
-  const texto = await readFile(join(RAIZ, 'agents', 'review-agent.md'), 'utf8');
-  assert.match(texto, /^model:\s*opus\s*$/m, 'o revisor saiu da camada alta');
+  //
+  // A primeira versao deste caso casava /^model:\s*opus\s*$/m contra o TEXTO CRU do arquivo
+  // — e passou durante todo o tempo em que o frontmatter do review-agent nao parseava. A
+  // linha existia; o campo estava sendo descartado no load. O caso guardava a APARENCIA do
+  // invariante, que e a definicao de passar pelo motivo errado (M-09).
+  //
+  // Ler depois do parse e a correcao. A camada alvo vem da policy, nunca literal aqui: o
+  // apelido de camada envelhece sozinho, e foi por congelar um literal que o v5 roteou
+  // sprint critica para um modelo vencido.
+  const { camadas, agentes } = await lerPolicy('esforco.json');
+  const { campos, erro } = lerFrontmatter(
+    await readFile(join(RAIZ, 'agents', 'review-agent.md'), 'utf8'),
+  );
+
+  assert.equal(erro, undefined, `o frontmatter do revisor nao le: ${erro}`);
+  assert.equal(agentes['review-agent'].camada, 'alto', 'a policy tirou o revisor da camada alta');
+  assert.equal(campos.model, camadas.alto.modelo, 'o revisor saiu da camada alta');
 });

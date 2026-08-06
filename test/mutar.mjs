@@ -40,20 +40,35 @@ let furos = 0;
 let naoAplicadas = 0;
 
 try {
-  for (const dir of ['gates', 'policy', 'test']) {
+  // `agents` e `skills` entram porque defeito historico tambem mora em metadata: o
+  // frontmatter que nao parseia derruba `tools` e `model`, e isso ja aconteceu duas vezes
+  // por causas diferentes.
+  //
+  // `bin` entra por outra razao, e ela e do harness: a suite de rotas executa `sdd-rota` a
+  // partir da raiz. Sem o binario no banco, TODA mutacao nessa suite derrubaria aqueles
+  // casos por ENOENT — e um caido por motivo errado conta como mutacao pega, escondendo o
+  // furo que o harness existe para achar.
+  for (const dir of ['gates', 'policy', 'test', 'agents', 'skills', 'bin']) {
     await cp(join(RAIZ, dir), join(banco, dir), { recursive: true });
   }
   await cp(join(RAIZ, 'package.json'), join(banco, 'package.json'));
 
   for (const m of mutacoes) {
-    // `gate` aceita caminho relativo dentro de `gates/` (ex.: "lib/isencoes"), porque
-    // modulo compartilhado tambem carrega defeito historico — e o de isencoes carrega o
-    // mais perigoso de todos: a lista do que os gates deixam de olhar.
-    const suiteId = m.gate.split('/').pop();
-    const original = await readFile(join(RAIZ, 'gates', `${m.gate}.mjs`), 'utf8');
+    // Duas formas de alvo:
+    //
+    //   `gate`    caminho dentro de gates/ (ex.: "lib/isencoes"), suite deduzida do nome.
+    //             Modulo compartilhado tambem carrega defeito historico — e o de isencoes
+    //             carrega o mais perigoso de todos: a lista do que os gates deixam de olhar.
+    //   `arquivo` caminho a partir da raiz, com `suite` declarada. Existe porque nem todo
+    //             defeito historico esta em codigo de gate: o frontmatter de um agente
+    //             derrubou `tools` e `model` sem quebrar uma linha de logica.
+    const alvo = m.arquivo ?? `gates/${m.gate}.mjs`;
+    const suiteId = m.suite ?? m.gate.split('/').pop();
+
+    const original = await readFile(join(RAIZ, alvo), 'utf8');
     const mutado = original.replace(m.de, m.para);
 
-    console.log(`\n▶ ${m.gate} · ${m.nome}`);
+    console.log(`\n▶ ${m.gate ?? m.arquivo} · ${m.nome}`);
     console.log(`  origem: ${m.origem}`);
 
     if (mutado === original) {
@@ -64,9 +79,9 @@ try {
       continue;
     }
 
-    await writeFile(join(banco, 'gates', `${m.gate}.mjs`), mutado);
-    const caidos = await rodarSuite(join(banco, 'test', 'cases', `${suiteId}.test.mjs`));
-    await writeFile(join(banco, 'gates', `${m.gate}.mjs`), original);
+    await writeFile(join(banco, alvo), mutado);
+    const caidos = await rodarSuite(join(banco, 'test', 'cases', `${suiteId}.test.mjs`), banco);
+    await writeFile(join(banco, alvo), original);
 
     if (caidos.length === 0) {
       console.log('  ✖ FURO — nenhum caso caiu com o defeito reintroduzido');
@@ -90,10 +105,18 @@ if (furos || naoAplicadas) {
 
 console.log('toda mutacao derrubou ao menos um caso.');
 
-async function rodarSuite(suite) {
+async function rodarSuite(suite, banco) {
   let saida = '';
   try {
-    const { stdout } = await exec('node', ['--test', suite], { maxBuffer: 16 * 1024 * 1024 });
+    // CLAUDE_PLUGIN_ROOT e fixado no banco de propósito. `raizDoRepo()` prefere a variavel
+    // quando ela existe — e ela EXISTE quando `npm run mutar` roda de dentro de uma sessao
+    // do Claude Code. Sem isto, o caso leria o arquivo REAL em vez da copia mutada, a
+    // mutacao nao derrubaria nada, e o furo reportado seria do harness, nao da suite.
+    const env = { ...process.env, CLAUDE_PLUGIN_ROOT: banco };
+    const { stdout } = await exec('node', ['--test', suite], {
+      env,
+      maxBuffer: 16 * 1024 * 1024,
+    });
     saida = stdout;
   } catch (erro) {
     saida = erro.stdout ?? '';

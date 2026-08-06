@@ -38,7 +38,7 @@
     },
     "sprint": {
       "camada": "por-agente",
-      "porque": "cada sub-agente ja fixa a propria camada no frontmatter — e isso e enforcement, nao recomendacao"
+      "porque": "cada sub-agente tem camada propria em `agentes` — e o frontmatter dele e CONFERIDO contra ela, que e o que faz disso enforcement e nao recomendacao"
     },
     "quick-fix": {
       "camada": "medio",
@@ -50,6 +50,27 @@
     }
   },
 
+  "_agentes": "Camada de cada sub-agente. FONTE UNICA: o frontmatter de agents/<id>.md e CONFERIDO contra esta tabela, nunca o contrario. Enquanto a camada viveu SO no frontmatter, a afirmacao de que ela era enforcement nao tinha quem provasse — e ficou falsa em seis arquivos, por um erro de YAML, sem nada notar. O caso que a guardava lia o texto cru do arquivo e passava: a linha `model: opus` existia, so nao estava sendo carregada.",
+
+  "agentes": {
+    "task-agent": {
+      "camada": "baixo",
+      "porque": "le a memoria e ordena tasks — saida mecanica, e um erro de ordenacao aparece na primeira task que nao fecha"
+    },
+    "code-agent": {
+      "camada": "medio",
+      "porque": "implementa com a resposta ja determinada pela task e pelo teste vermelho"
+    },
+    "review-agent": {
+      "camada": "alto",
+      "porque": "julgamento que ninguem confere depois com o mesmo cuidado, e e exatamente a auditoria que a versao anterior deixou cair para esforco baixo"
+    },
+    "memory-agent": {
+      "camada": "baixo",
+      "porque": "atualiza estado e registra metrica — mecanico, e a divergencia aparece na leitura seguinte"
+    }
+  },
+
   "excecoes": [
     {
       "quando": "sprint critica — autenticacao, isolamento de tenant, movimentacao de dinheiro, dado sensivel",
@@ -58,7 +79,7 @@
     },
     {
       "quando": "auditoria de sprint, em qualquer criticidade",
-      "o_que_muda": "nada — a camada alta e FIXA no frontmatter do agente que audita",
+      "o_que_muda": "nada — a camada alta e FIXA para o agente que audita, declarada em `agentes` e conferida contra o frontmatter dele",
       "porque": "a auditoria da versao anterior ja falhou por esforco baixo, e foi essa falha que motivou fixar a camada na definicao do agente em vez de deixa-la como recomendacao em prosa"
     }
   ]
