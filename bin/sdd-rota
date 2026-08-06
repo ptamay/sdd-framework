@@ -19,6 +19,7 @@ const ler = async (nome) => JSON.parse(await readFile(join(RAIZ, 'policy', nome)
 
 const { rotas, estagios, _prova_de_leitura } = await ler('rotas.json');
 const memoria = await ler('memoria.json');
+const esforco = await ler('esforco.json');
 
 const alvo = process.argv[2];
 
@@ -40,7 +41,20 @@ const estagio = estagios.find((e) => e.id === rota.estagio);
 
 console.log(`# Rota: ${rota.id}\n`);
 console.log(`**Quando:** ${rota.quando}`);
-console.log(`**Estagio:** ${rota.estagio} — fecha quando ${estagio?.fecha_quando ?? '—'}\n`);
+console.log(`**Estagio:** ${rota.estagio} — fecha quando ${estagio?.fecha_quando ?? '—'}`);
+
+// A alocacao de esforco vem do catalogo, nunca de prosa numa skill. A versao anterior
+// congelou esta escolha numa geracao antiga do modelo e passou a rotear toda sprint critica
+// — auth, isolamento de tenant, dinheiro — para um modelo que ja nao era o mais capaz, no
+// ponto de maior risco do processo. A tabela aloca CAMADAS, nunca versoes.
+const camadaDaRota = esforco.rotas[rota.id];
+if (camadaDaRota?.camada === 'por-agente') {
+  console.log(`**Esforco:** por sub-agente, fixado no frontmatter de cada um — ${camadaDaRota.porque}`);
+} else if (camadaDaRota) {
+  const c = esforco.camadas[camadaDaRota.camada];
+  console.log(`**Esforco:** camada ${camadaDaRota.camada} (${c.modelo}) — ${camadaDaRota.porque}`);
+}
+console.log('');
 
 console.log('## Prova de leitura\n');
 console.log(`${_prova_de_leitura}\n`);
@@ -68,5 +82,13 @@ for (const r of rota.regras) console.log(`- ${r}`);
 
 console.log('\n## Gates que valem aqui\n');
 for (const g of await gatesAtivos()) console.log(`${g.numero}. ${g.titulo}`);
+if (esforco.excecoes?.length) {
+  console.log('\n## Excecoes de esforco\n');
+  for (const x of esforco.excecoes) {
+    console.log(`- **${x.quando}**`);
+    console.log(`  ${x.o_que_muda} — ${x.porque}`);
+  }
+}
+
 console.log('\nRode `sdd-gates` antes de merge ou push. Falha = pare e reporte; nao contorne.');
 console.log('`pulado` nao e aprovacao — o relatorio diz quantos de fato verificaram.');

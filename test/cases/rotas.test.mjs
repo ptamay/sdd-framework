@@ -165,3 +165,45 @@ async function* arquivosMd(absoluto, prefixo) {
     else if (e.name.endsWith('.md')) yield rel;
   }
 }
+
+// --------------------------------------------------------------------- esforco
+
+test('toda rota tem camada de esforco declarada, e a camada existe', async () => {
+  // O v5 congelou esta escolha numa geracao antiga do modelo e passou a rotear TODA sprint
+  // critica — auth, isolamento de tenant, dinheiro — para um modelo que ja nao era o mais
+  // capaz. Nao era deriva de documentacao: era a decisao de orquestracao sendo tomada com
+  // lista vencida, no ponto de maior risco do processo.
+  const { rotas } = await lerPolicy('rotas.json');
+  const esforco = await lerPolicy('esforco.json');
+
+  for (const r of rotas) {
+    const e = esforco.rotas[r.id];
+    assert.ok(e, `rota "${r.id}" sem camada de esforco declarada`);
+    assert.ok(e.porque?.length > 20, `rota "${r.id}" sem motivo para a camada`);
+    if (e.camada !== 'por-agente') {
+      assert.ok(esforco.camadas[e.camada], `rota "${r.id}" cita camada inexistente: ${e.camada}`);
+    }
+  }
+});
+
+test('a tabela aloca CAMADAS, nunca versoes de modelo', async () => {
+  // O conserto do item 233 aplicado na origem. Um identificador de versao aqui envelhece
+  // sozinho e ninguem percebe — foi assim que a decisao mais cara do processo passou a ser
+  // tomada com uma lista vencida.
+  const esforco = await lerPolicy('esforco.json');
+  const bruto = JSON.stringify(esforco);
+
+  assert.doesNotMatch(bruto, /claude-[a-z]+-\d/, 'identificador de versao no catalogo de esforco');
+  assert.doesNotMatch(bruto, /\d{8}/, 'data de versao no catalogo de esforco');
+
+  for (const c of Object.values(esforco.camadas)) {
+    assert.match(c.modelo, /^[a-z]+$/, `"${c.modelo}" parece versao, nao camada`);
+  }
+});
+
+test('o agente que AUDITA nao pode cair de camada', async () => {
+  // A auditoria do v5 falhou por esforco baixo, e foi essa falha que motivou fixar a camada
+  // na definicao do agente em vez de deixa-la como recomendacao em prosa.
+  const texto = await readFile(join(RAIZ, 'agents', 'review-agent.md'), 'utf8');
+  assert.match(texto, /^model:\s*opus\s*$/m, 'o revisor saiu da camada alta');
+});

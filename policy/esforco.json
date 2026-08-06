@@ -1,0 +1,65 @@
+{
+  "_": "Alocacao de esforco por rota. FONTE UNICA: `sdd-rota` imprime daqui, e nenhuma skill ou agente repete a escolha em prosa.",
+
+  "_licao": "A versao anterior deste framework congelou esta tabela numa geracao antiga do modelo mais capaz e passou a rotear TODA sprint critica — auth, isolamento de tenant, dinheiro — para um modelo que ja nao era o melhor disponivel. Nao era deriva de documentacao: era a decisao de orquestracao sendo tomada com lista vencida, no ponto de maior risco do processo.",
+
+  "_regra": "Esta tabela aloca CAMADAS de esforco, nunca versoes. Os identificadores abaixo sao apelidos de camada e envelhecem sozinhos quando um modelo novo entra na camada. Se algum dia alguem trocar um apelido por um identificador de versao, este comentario e a razao para desfazer.",
+
+  "camadas": {
+    "alto": {
+      "modelo": "opus",
+      "natureza": "sintetizar, decidir, auditar",
+      "quando": "o resultado e um julgamento que ninguem vai conferir depois com o mesmo cuidado"
+    },
+    "medio": {
+      "modelo": "sonnet",
+      "natureza": "implementar",
+      "quando": "a resposta certa esta determinada e o trabalho e produzi-la"
+    },
+    "baixo": {
+      "modelo": "haiku",
+      "natureza": "verificar, listar, resumir",
+      "quando": "a saida e mecanica e um erro apareceria imediatamente"
+    }
+  },
+
+  "rotas": {
+    "init": {
+      "camada": "baixo",
+      "porque": "roda um comando e le a saida"
+    },
+    "escopo": {
+      "camada": "alto",
+      "porque": "extrair sem perder e sem inventar, separar premissa de lacuna, e triar instrucao plantada no material de terceiro — tudo julgamento, e o erro so aparece fases depois"
+    },
+    "arquitetura": {
+      "camada": "alto",
+      "porque": "e onde a ambiguidade vira lei. Cruzar contra a origem procurando CONTRADICAO (nao lacuna) e o trabalho mais caro do processo, e a que sobreviver aqui governa todas as sprints"
+    },
+    "sprint": {
+      "camada": "por-agente",
+      "porque": "cada sub-agente ja fixa a propria camada no frontmatter — e isso e enforcement, nao recomendacao"
+    },
+    "quick-fix": {
+      "camada": "medio",
+      "porque": "implementacao pontual, com o escopo ja decidido"
+    },
+    "change-request": {
+      "camada": "alto",
+      "porque": "decisao sobre lei e escopo"
+    }
+  },
+
+  "excecoes": [
+    {
+      "quando": "sprint critica — autenticacao, isolamento de tenant, movimentacao de dinheiro, dado sensivel",
+      "o_que_muda": "o agente que implementa sobe para a camada alta",
+      "porque": "e a unica situacao em que se paga a camada alta para IMPLEMENTAR, e nao para decidir"
+    },
+    {
+      "quando": "auditoria de sprint, em qualquer criticidade",
+      "o_que_muda": "nada — a camada alta e FIXA no frontmatter do agente que audita",
+      "porque": "a auditoria da versao anterior ja falhou por esforco baixo, e foi essa falha que motivou fixar a camada na definicao do agente em vez de deixa-la como recomendacao em prosa"
+    }
+  ]
+}
