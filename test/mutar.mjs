@@ -48,7 +48,7 @@ try {
   // partir da raiz. Sem o binario no banco, TODA mutacao nessa suite derrubaria aqueles
   // casos por ENOENT — e um caido por motivo errado conta como mutacao pega, escondendo o
   // furo que o harness existe para achar.
-  for (const dir of ['gates', 'policy', 'test', 'agents', 'skills', 'bin']) {
+  for (const dir of ['gates', 'policy', 'test', 'agents', 'skills', 'bin', 'hooks']) {
     await cp(join(RAIZ, dir), join(banco, dir), { recursive: true });
   }
   await cp(join(RAIZ, 'package.json'), join(banco, 'package.json'));

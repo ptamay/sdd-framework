@@ -196,6 +196,24 @@
       "efeito": "o bloco nao parseia e o agente carrega SEM tools — isto e, sem restricao nenhuma, que e o oposto de somente-leitura. A linha `tools: Read, Glob, Grep` continua no arquivo, entao a versao anterior do caso a encontrava, nao achava Bash nem Write, e aprovava um agente irrestrito",
       "de": "description: \"Carrega o Memory Bank e ordena as tasks da sprint em fatias verticais. Somente leitura: nao gera codigo, nao cria branch, nao commita.\"",
       "para": "description: Carrega o Memory Bank e ordena as tasks da sprint em fatias verticais. Somente leitura: nao gera codigo, nao cria branch, nao commita."
+    },
+    {
+      "arquivo": "hooks/guard.mjs",
+      "suite": "hooks",
+      "origem": "nova — a classe M-12 na unica camada que a suite nao alcancava",
+      "nome": "o bloqueio sai com 0 em vez de 2",
+      "efeito": "2 e o unico codigo que o harness le como bloqueio; com 0 a escrita na lista de isencoes PASSA. O motivo ainda e impresso no stderr, entao o log parece o de um bloqueio que aconteceu — e a barreira esta desarmada com `decidir()` perfeito e cobertura cheia",
+      "de": "    process.exit(2); // 2 = bloqueia a chamada e devolve o motivo ao modelo",
+      "para": "    process.exit(0);"
+    },
+    {
+      "arquivo": "hooks/contexto.mjs",
+      "suite": "hooks",
+      "origem": "v6 — a colisao de diretorio com a versao anterior do framework",
+      "nome": "o marcador volta a ser a mera existencia de .sdd/",
+      "efeito": "a versao anterior usa o mesmo diretorio: abrir o repositorio dela com este plugin carregado injeta o processo errado, sem nada que denuncie a troca",
+      "de": "if (!(await existe(join(raiz, '.sdd', 'framework.json')))) process.exit(0);",
+      "para": "if (!(await existe(join(raiz, '.sdd')))) process.exit(0);"
     }
   ]
 }
