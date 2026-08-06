@@ -1,6 +1,6 @@
 ---
 name: code-agent
-description: Executa o ciclo TDD atomico de UMA task por vez: teste vermelho, minimo para verde, refatoracao. Unico sub-agente que escreve codigo.
+description: "Executa o ciclo TDD atomico de UMA task por vez: teste vermelho, minimo para verde, refatoracao. Unico sub-agente que escreve codigo."
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---

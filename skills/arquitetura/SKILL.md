@@ -1,6 +1,6 @@
 ---
 name: arquitetura
-description: Fechar a arquitetura de um projeto: lei, requisitos, stack e mapa de modulos, antes da primeira linha de codigo. Use quando o escopo esta aprovado e o usuario diz 'arquitetura', 'fechar escopo', 'definir stack', ou pede a triade do projeto.
+description: "Fechar a arquitetura de um projeto: lei, requisitos, stack e mapa de modulos, antes da primeira linha de codigo. Use quando o escopo esta aprovado e o usuario diz 'arquitetura', 'fechar escopo', 'definir stack', ou pede a triade do projeto."
 ---
 
 ## Papel

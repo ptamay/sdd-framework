@@ -1,6 +1,6 @@
 ---
 name: sprint
-description: Executar uma sprint do Constitutional SDD: implementar as tasks da sprint ativa em ciclo TDD atomico, sob os gates mecanicos. Use quando o usuario diz 'sprint', 'implementar as tasks', 'proxima sprint', ou o plano tem sprint ativa pronta.
+description: "Executar uma sprint do Constitutional SDD: implementar as tasks da sprint ativa em ciclo TDD atomico, sob os gates mecanicos. Use quando o usuario diz 'sprint', 'implementar as tasks', 'proxima sprint', ou o plano tem sprint ativa pronta."
 ---
 
 ## Papel

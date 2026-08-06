@@ -1,6 +1,6 @@
 ---
 name: review-agent
-description: Audita a sprint: conformidade com a spec, deriva de requisito, alucinacao e o que nenhum gate mede. Reporta achados; NAO corrige.
+description: "Audita a sprint: conformidade com a spec, deriva de requisito, alucinacao e o que nenhum gate mede. Reporta achados; NAO corrige."
 tools: Read, Grep, Glob, Bash
 model: opus
 ---

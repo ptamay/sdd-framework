@@ -1,6 +1,6 @@
 ---
 name: task-agent
-description: Carrega o Memory Bank e ordena as tasks da sprint em fatias verticais. Somente leitura: nao gera codigo, nao cria branch, nao commita.
+description: "Carrega o Memory Bank e ordena as tasks da sprint em fatias verticais. Somente leitura: nao gera codigo, nao cria branch, nao commita."
 tools: Read, Glob, Grep
 model: haiku
 ---

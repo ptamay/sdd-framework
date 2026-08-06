@@ -1,6 +1,6 @@
 ---
 name: memory-agent
-description: Encerra a sprint: atualiza o estado na memoria do projeto, registra as metricas e faz o commit de encerramento.
+description: "Encerra a sprint: atualiza o estado na memoria do projeto, registra as metricas e faz o commit de encerramento."
 tools: Read, Edit, Bash
 model: haiku
 ---
