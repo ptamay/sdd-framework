@@ -102,24 +102,27 @@ test('nenhuma skill ou agente repete um valor que vive no catalogo', async () =>
 
 // --------------------------------------------------------------------- sub-agentes
 
-test('todo sub-agente declara nome, ferramentas e modelo', async () => {
-  for await (const rel of arquivosMd(join(RAIZ, 'agents'), 'agents')) {
-    const texto = await readFile(join(RAIZ, rel), 'utf8');
-    const fm = texto.match(/^---\n([\s\S]*?)\n---/);
-    assert.ok(fm, `${rel} sem frontmatter`);
+// "todo sub-agente declara nome, ferramentas e modelo" saiu daqui: a versao que existia
+// casava /^campo:/m contra a fatia crua do frontmatter e aprovava um bloco que o YAML nao
+// consegue ler. Quem cobre isso agora e metadata.test.mjs, DEPOIS do parse.
 
-    for (const campo of ['name', 'description', 'tools', 'model']) {
-      assert.match(fm[1], new RegExp(`^${campo}:`, 'm'), `${rel} sem "${campo}"`);
-    }
-  }
-});
+const ferramentasDe = async (agente) => {
+  // Ler as ferramentas depois do parse, nunca por regex no texto. Um bloco que nao parseia
+  // deixa o agente SEM restricao nenhuma em runtime — e a linha `tools:` continua no
+  // arquivo, entao a regex acha, confirma e aprova o agente irrestrito (M-09).
+  const { campos, erro } = lerFrontmatter(
+    await readFile(join(RAIZ, 'agents', `${agente}.md`), 'utf8'),
+  );
+  assert.equal(erro, undefined, `o frontmatter de ${agente} nao le: ${erro}`);
+  assert.ok(campos.tools, `${agente} sem "tools"`);
+  return campos.tools;
+};
 
 test('o revisor NAO tem permissao de escrita — e isso e a definicao dele', async () => {
   // Restricao de ferramenta e enforcement, nao documentacao. Um revisor que conserta o que
   // deveria auditar deixa de ser revisor no momento em que conserta — e isso o v5 provou
   // funcionando em execucao real: "achou o bloqueador e reportou sem consertar".
-  const texto = await readFile(join(RAIZ, 'agents', 'review-agent.md'), 'utf8');
-  const tools = texto.match(/^tools:\s*(.+)$/m)[1];
+  const tools = await ferramentasDe('review-agent');
 
   assert.doesNotMatch(tools, /\bWrite\b/, 'o revisor ganhou Write');
   assert.doesNotMatch(tools, /\bEdit\b/, 'o revisor ganhou Edit');
@@ -128,11 +131,12 @@ test('o revisor NAO tem permissao de escrita — e isso e a definicao dele', asy
 test('o agente somente-leitura nao tem Bash — a prosa dele nao pode mandar criar branch', async () => {
   // Contradicao entre o que o frontmatter PERMITE e o que a prosa MANDA nao quebra teste
   // nenhum: some numa leitura e aparece na execucao (item 246 do v5).
-  const texto = await readFile(join(RAIZ, 'agents', 'task-agent.md'), 'utf8');
-  const tools = texto.match(/^tools:\s*(.+)$/m)[1];
+  const tools = await ferramentasDe('task-agent');
 
   assert.doesNotMatch(tools, /\bBash\b/);
   assert.doesNotMatch(tools, /\bWrite\b/);
+
+  const texto = await readFile(join(RAIZ, 'agents', 'task-agent.md'), 'utf8');
   assert.match(texto, /reporta/i, 'o agente sem Bash precisa dizer que REPORTA a branch');
 });
 

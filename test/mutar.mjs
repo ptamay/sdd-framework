@@ -108,7 +108,7 @@ console.log('toda mutacao derrubou ao menos um caso.');
 async function rodarSuite(suite, banco) {
   let saida = '';
   try {
-    // CLAUDE_PLUGIN_ROOT e fixado no banco de propósito. `raizDoRepo()` prefere a variavel
+    // CLAUDE_PLUGIN_ROOT e fixado no banco de proposito. `raizDoRepo()` prefere a variavel
     // quando ela existe — e ela EXISTE quando `npm run mutar` roda de dentro de uma sessao
     // do Claude Code. Sem isto, o caso leria o arquivo REAL em vez da copia mutada, a
     // mutacao nao derrubaria nada, e o furo reportado seria do harness, nao da suite.

@@ -187,6 +187,15 @@
       "efeito": "o bloco inteiro deixa de parsear e o revisor carrega sem model — auditoria em camada indefinida. A versao anterior deste caso casava /^model:\\s*opus\\s*$/m contra o texto cru e passava: a linha estava la, o campo nao. E a prova de que o caso guardava a aparencia do invariante, nao o invariante (M-09)",
       "de": "description: \"Audita a sprint: conformidade com a spec, deriva de requisito, alucinacao e o que nenhum gate mede. Reporta achados; NAO corrige.\"",
       "para": "description: Audita a sprint: conformidade com a spec, deriva de requisito, alucinacao e o que nenhum gate mede. Reporta achados; NAO corrige."
+    },
+    {
+      "arquivo": "agents/task-agent.md",
+      "suite": "rotas",
+      "origem": "v6 2026-08-05 — a mesma classe, no eixo da restricao de ferramenta",
+      "nome": "o agente somente-leitura perde as aspas, com a linha `tools:` INTACTA",
+      "efeito": "o bloco nao parseia e o agente carrega SEM tools — isto e, sem restricao nenhuma, que e o oposto de somente-leitura. A linha `tools: Read, Glob, Grep` continua no arquivo, entao a versao anterior do caso a encontrava, nao achava Bash nem Write, e aprovava um agente irrestrito",
+      "de": "description: \"Carrega o Memory Bank e ordena as tasks da sprint em fatias verticais. Somente leitura: nao gera codigo, nao cria branch, nao commita.\"",
+      "para": "description: Carrega o Memory Bank e ordena as tasks da sprint em fatias verticais. Somente leitura: nao gera codigo, nao cria branch, nao commita."
     }
   ]
 }
