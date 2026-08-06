@@ -214,6 +214,15 @@
       "efeito": "a versao anterior usa o mesmo diretorio: abrir o repositorio dela com este plugin carregado injeta o processo errado, sem nada que denuncie a troca",
       "de": "if (!(await existe(join(raiz, '.sdd', 'framework.json')))) process.exit(0);",
       "para": "if (!(await existe(join(raiz, '.sdd')))) process.exit(0);"
+    },
+    {
+      "arquivo": "hooks/guard.mjs",
+      "suite": "hooks",
+      "origem": "v6 2026-08-06 — medido, nao suposto: o importador morria em silencio",
+      "nome": "a deteccao de entrada direta volta a comparar o basename",
+      "efeito": "`endsWith` sem separador faz \"guard.mjs\" casar com \"d.mjs\": o corpo do hook executa no IMPORT, consome o stdin e chama process.exit — e o programa que importou morre antes da primeira linha, com codigo 0 e saida vazia. A licao ja estava escrita em vinte linhas no runner e nao atravessou para o arquivo vizinho",
+      "de": "if (ehEntradaDireta(import.meta.url, process.argv[1])) {",
+      "para": "if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\\\/g, '/').split('/').pop())) {"
     }
   ]
 }

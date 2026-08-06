@@ -18,10 +18,10 @@
 
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import { gatesAtivos, raizDoRepo } from './lib/policy.mjs';
 import { validarIsencoes } from './lib/isencoes.mjs';
+import { ehEntradaDireta } from './lib/entrada.mjs';
 
 const ESTADOS_REPROVA = new Set(['falha', 'erro']);
 const ESTADOS_VALIDOS = new Set(['ok', 'falha', 'erro', 'pulado']);
@@ -204,24 +204,6 @@ export async function lerValvulas(raiz) {
 
 // ------------------------------------------------------------------ entrada
 
-/**
- * Este modulo foi invocado diretamente?
- *
- * Comparar `import.meta.url` com `file://` + argv[1] NAO funciona: a URL do modulo tem tres
- * barras e percent-encoding, e o argv traz o caminho nativo. Num diretorio com espaco, ou em
- * Windows, a comparacao simplesmente nunca casa — e o CLI sai com codigo 0 sem imprimir uma
- * linha, que e a leitura de "tudo certo". Foi o primeiro resultado da primeira execucao real
- * deste runner. `pathToFileURL` e a unica forma correta.
- */
-export function ehEntradaDireta(metaUrl, argv1) {
-  if (!argv1) return false;
-  try {
-    return metaUrl === pathToFileURL(argv1).href;
-  } catch {
-    return false;
-  }
-}
-
 if (ehEntradaDireta(import.meta.url, process.argv[1])) {
   const raiz = process.argv[2] ?? process.cwd();
   const valvulas = await lerValvulas(raiz);
@@ -232,4 +214,6 @@ if (ehEntradaDireta(import.meta.url, process.argv[1])) {
   process.exit(codigoDeSaida(relatorio.veredito));
 }
 
-export { raizDoRepo };
+// Reexportado: a funcao mora em lib/entrada.mjs desde que o guard precisou dela, e quem ja
+// importava daqui continua importando daqui.
+export { raizDoRepo, ehEntradaDireta };

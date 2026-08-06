@@ -19,6 +19,8 @@
 
 import { readFile } from 'node:fs/promises';
 
+import { ehEntradaDireta } from '../gates/lib/entrada.mjs';
+
 const PROTEGIDOS = [/(^|[\\/])\.sdd[\\/]gates-ignore\.json$/];
 
 // Verbos de shell que escrevem. O v5 aprendeu, em quatro ocorrencias distintas, que a
@@ -70,7 +72,7 @@ function motivo(alvo) {
 
 // ------------------------------------------------------------------ entrada do hook
 
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop())) {
+if (ehEntradaDireta(import.meta.url, process.argv[1])) {
   const bruto = await lerStdin();
   let evento;
   try {

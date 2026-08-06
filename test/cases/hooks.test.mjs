@@ -21,6 +21,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 
 import { decidir } from '../../hooks/guard.mjs';
@@ -125,6 +126,42 @@ test('guard: payload ilegivel NAO barra, e avisa', async () => {
 test('guard: stdin vazio nao barra nem estoura', async () => {
   const { codigo } = await rodarHook('guard.mjs', '');
   assert.equal(codigo, 0);
+});
+
+test('guard: IMPORTAR o modulo nao executa o hook, nem de um arquivo chamado d.mjs', async () => {
+  // A deteccao de entrada direta comparava o BASENAME de argv[1] com `endsWith`, sem
+  // separador — e "guard.mjs".endsWith("d.mjs") e verdadeiro. Um modulo com esse nome
+  // importando o guard fazia o corpo do hook rodar no import: ele consumia o stdin e
+  // chamava process.exit, e o programa importador morria antes da primeira linha, com
+  // codigo 0 e saida vazia. Medido, nao suposto.
+  //
+  // O nome `d.mjs` esta aqui como CANARIO. Nao e o cenario provavel; e o que distingue a
+  // comparacao correta da que so parece correta.
+  const base = await mkdtemp(join(tmpdir(), 'sdd-hook-'));
+  const dir = join(base, 'meu projeto');
+  await mkdir(dir, { recursive: true });
+
+  try {
+    const alvo = pathToFileURL(join(RAIZ, 'hooks', 'guard.mjs')).href;
+    const corpo = `import { decidir } from ${JSON.stringify(alvo)};\nconsole.log('VIVO', decidir({}) === null);\n`;
+
+    for (const nome of ['d.mjs', 'guard.mjs', 'normal.mjs']) {
+      await writeFile(join(dir, nome), corpo);
+
+      const r = await new Promise((resolve, reject) => {
+        const p = spawn(process.execPath, [join(dir, nome)], { stdio: ['pipe', 'pipe', 'pipe'] });
+        let saida = '';
+        p.stdout.on('data', (d) => (saida += d));
+        p.on('error', reject);
+        p.on('close', (codigo) => resolve({ codigo, saida }));
+        p.stdin.end('');
+      });
+
+      assert.match(r.saida, /VIVO true/, `importador "${nome}" foi morto pelo corpo do hook`);
+    }
+  } finally {
+    await rm(base, { recursive: true, force: true });
+  }
 });
 
 // =========================================================================== contexto
