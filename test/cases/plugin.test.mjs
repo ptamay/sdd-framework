@@ -35,6 +35,19 @@ test('o manifesto e valido e declara versao EXPLICITA', async () => {
   assert.match(m.version, /^\d+\.\d+\.\d+$/, 'versao ausente ou fora de semver');
 });
 
+test('a versao NAO e redeclarada no package.json', async () => {
+  // I-01 no unico numero que muda a cada entrega. Os dois binarios leem de plugin.json —
+  // `sdd-gates` carimba essa versao no registro de execucao dentro do projeto do usuario.
+  // Uma segunda copia aqui nao tem quem a mantenha: divergem em silencio, e o registro
+  // passa a atribuir um resultado a uma versao que nao o produziu.
+  //
+  // O pacote e `private: true`, entao o npm nunca precisa do campo.
+  const pkg = JSON.parse(await readFile(join(RAIZ, 'package.json'), 'utf8'));
+
+  assert.equal(pkg.private, true, 'sem `private` o npm passa a exigir `version` de volta');
+  assert.equal(pkg.version, undefined, 'a versao voltou ao package.json — a fonte e plugin.json');
+});
+
 test('componentes ficam na RAIZ do plugin, nunca dentro de .claude-plugin/', async () => {
   // O erro mais comum, e ele nao produz erro nenhum: o componente simplesmente nao carrega.
   for (const dir of ['hooks', 'bin', 'gates', 'policy']) {
