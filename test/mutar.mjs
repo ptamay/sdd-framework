@@ -36,8 +36,10 @@ const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { mutacoes } = JSON.parse(await readFile(join(RAIZ, 'test', 'mutacoes.json'), 'utf8'));
 
 const banco = await mkdtemp(join(tmpdir(), 'sdd-mutacao-'));
+const baseline = new Map();
 let furos = 0;
 let naoAplicadas = 0;
+let bancoQuebrado = 0;
 
 try {
   // `agents` e `skills` entram porque defeito historico tambem mora em metadata: o
@@ -48,7 +50,7 @@ try {
   // partir da raiz. Sem o binario no banco, TODA mutacao nessa suite derrubaria aqueles
   // casos por ENOENT — e um caido por motivo errado conta como mutacao pega, escondendo o
   // furo que o harness existe para achar.
-  for (const dir of ['gates', 'policy', 'test', 'agents', 'skills', 'bin', 'hooks']) {
+  for (const dir of ['gates', 'policy', 'test', 'agents', 'skills', 'bin', 'hooks', '.claude-plugin']) {
     await cp(join(RAIZ, dir), join(banco, dir), { recursive: true });
   }
   await cp(join(RAIZ, 'package.json'), join(banco, 'package.json'));
@@ -79,8 +81,27 @@ try {
       continue;
     }
 
+    const suite = join(banco, 'test', 'cases', `${suiteId}.test.mjs`);
+
+    // BASELINE antes de mutar. Um caso que ja estava vermelho no banco nao foi derrubado
+    // pela mutacao — foi derrubado pelo banco, e conta-lo como kill esconde o furo que este
+    // harness existe para achar. Aconteceu de verdade: `.claude-plugin/` nao era copiado, o
+    // `sdd-init` estourava ao ler a versao, e uma mutacao no init "derrubou" DEZ casos sem
+    // ter nada a ver com nenhum deles.
+    if (!baseline.has(suiteId)) {
+      baseline.set(suiteId, new Set(await rodarSuite(suite, banco)));
+    }
+    const jaVermelhos = baseline.get(suiteId);
+
+    if (jaVermelhos.size > 0) {
+      console.log(`  ⚠ ${jaVermelhos.size} caso(s) JA falham no banco sem mutacao:`);
+      for (const c of jaVermelhos) console.log(`      ${c}`);
+      console.log('    Isto e defeito do harness, nao da suite — o banco esta incompleto.');
+      bancoQuebrado++;
+    }
+
     await writeFile(join(banco, alvo), mutado);
-    const caidos = await rodarSuite(join(banco, 'test', 'cases', `${suiteId}.test.mjs`), banco);
+    const caidos = (await rodarSuite(suite, banco)).filter((c) => !jaVermelhos.has(c));
     await writeFile(join(banco, alvo), original);
 
     if (caidos.length === 0) {
@@ -95,11 +116,15 @@ try {
 }
 
 console.log('\n' + '-'.repeat(70));
-console.log(`mutacoes: ${mutacoes.length} · furos: ${furos} · nao aplicadas: ${naoAplicadas}`);
+console.log(
+  `mutacoes: ${mutacoes.length} · furos: ${furos} · nao aplicadas: ${naoAplicadas}` +
+    ` · banco incompleto: ${bancoQuebrado}`,
+);
 
-if (furos || naoAplicadas) {
+if (furos || naoAplicadas || bancoQuebrado) {
   console.log('\nFuro = a suite nao pega um defeito que ja custou caro uma vez.');
   console.log('Nao aplicada = o codigo mudou e o catalogo de mutacoes ficou para tras.');
+  console.log('Banco incompleto = a suite ja falhava sem mutacao, entao a medicao nao vale.');
   process.exit(1);
 }
 

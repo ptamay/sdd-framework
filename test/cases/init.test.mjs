@@ -36,7 +36,8 @@ async function repoNovo() {
   return raiz;
 }
 
-const rodarInit = (raiz) => exec(process.execPath, [INIT, raiz], { cwd: raiz });
+const rodarInit = (raiz, env) =>
+  exec(process.execPath, [INIT, raiz], { cwd: raiz, env: { ...process.env, ...env } });
 const existe = (c) => access(c).then(() => true, () => false);
 
 // --------------------------------------------------------------------- o produto
@@ -149,14 +150,36 @@ test('as permissoes ficam no projeto, porque o plugin nao pode carrega-las', asy
 
 // --------------------------------------------------------------------- o passo manual
 
-test('o bootstrap DECLARA o passo que nenhum gate cobre', async () => {
+test('o bootstrap DECLARA os passos que nenhum gate cobre — TODOS eles', async () => {
   // Lacuna declarada e divida que alguem pode pagar; lacuna omitida vira "achavamos que
   // estava protegido". O v5 escreveu isso no proprio CODEOWNERS, dizendo em voz alta que
   // nao havia bloqueio de servidor naquele repositorio.
+  //
+  // A versao anterior deste caso exigia UM passo. A primeira execucao real do bootstrap
+  // declarou esse um, omitiu o segundo, e passou: o CI nasceu com o marcador no lugar da
+  // URL do framework e o relatorio disse "concluido". Um caso que exige um item de uma
+  // lista nao guarda a lista — ele guarda o primeiro item.
   const raiz = await repoNovo();
   const { stdout } = await rodarInit(raiz);
+
+  assert.match(stdout, /MANUAIS/);
   assert.match(stdout, /protecao de branch|proteção de branch/i);
-  assert.match(stdout, /MANUAL/);
+  assert.match(stdout, /<URL-DO-REPOSITORIO-DO-FRAMEWORK>/, 'o placeholder do CI nao foi declarado');
+  assert.match(stdout, /FALHA no clone/, 'nao disse o que acontece se ficar como esta');
+});
+
+test('com SDD_ORIGEM setada, o bootstrap NAO declara um placeholder que nao existe', async () => {
+  // A outra direcao. Declaracao que aparece sempre vira ruido, e ruido e o que ensina alguem
+  // a parar de ler a secao inteira — inclusive o item que era verdade.
+  const raiz = await repoNovo();
+  const origem = 'https://exemplo.invalido/sdd.git';
+  const { stdout } = await rodarInit(raiz, { SDD_ORIGEM: origem });
+
+  assert.doesNotMatch(stdout, /<URL-DO-REPOSITORIO-DO-FRAMEWORK>/);
+  assert.match(stdout, /protecao de branch|proteção de branch/i, 'o passo que continua valendo sumiu junto');
+
+  const ci = await readFile(join(raiz, '.github', 'workflows', 'ci.yml'), 'utf8');
+  assert.ok(ci.includes(origem), 'a origem nao foi gravada no job');
 });
 
 // --------------------------------------------------------------------- marcador e registro

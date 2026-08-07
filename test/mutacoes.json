@@ -223,6 +223,15 @@
       "efeito": "`endsWith` sem separador faz \"guard.mjs\" casar com \"d.mjs\": o corpo do hook executa no IMPORT, consome o stdin e chama process.exit — e o programa que importou morre antes da primeira linha, com codigo 0 e saida vazia. A licao ja estava escrita em vinte linhas no runner e nao atravessou para o arquivo vizinho",
       "de": "if (ehEntradaDireta(import.meta.url, process.argv[1])) {",
       "para": "if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\\\/g, '/').split('/').pop())) {"
+    },
+    {
+      "arquivo": "bin/sdd-init",
+      "suite": "init",
+      "origem": "v6 2026-08-07 — achado na PRIMEIRA execucao real do bootstrap",
+      "nome": "o placeholder do CI volta a nao ser declarado",
+      "efeito": "o job de CI nasce com o marcador no lugar da URL do framework, o clone falha e nenhum gate roda no servidor — e o relatorio diz \"bootstrap concluido\" declarando os OUTROS passos manuais, o que e pior que nao declarar nenhum: a secao parece completa",
+      "de": "if (await placeholderVivo()) {",
+      "para": "if (false) {"
     }
   ]
 }

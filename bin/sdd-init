@@ -34,6 +34,13 @@ const { version: versaoDoPlugin } = JSON.parse(
   await readFile(join(FRAMEWORK, '.claude-plugin', 'plugin.json'), 'utf8'),
 );
 
+// Sem `SDD_ORIGEM` o job de CI nasce com este marcador no lugar da URL do framework, e nao
+// roda. Falhar alto e o comportamento certo; o defeito era outro — a primeira execucao real
+// do bootstrap declarou dois passos manuais e OMITIU este, entao o usuario recebeu
+// "bootstrap concluido" com um CI que nao clona nada. Lacuna omitida vira "achavamos que
+// estava protegido", que e a frase que o gate `context` existe para nunca precisar.
+const PLACEHOLDER_ORIGEM = '<URL-DO-REPOSITORIO-DO-FRAMEWORK>';
+
 const criados = [];
 const preservados = [];
 
@@ -71,14 +78,37 @@ if (relatorio.veredito === 'reprovado') {
 
 console.log('\n# Proximo passo\n');
 console.log('  /sdd:escopo        define o que o sistema faz');
-console.log('\nUm passo MANUAL que nenhum gate cobre: ligue a protecao de branch no');
-console.log('repositorio remoto. O job de CI so vira barreira quando ela existe — sem ela,');
-console.log('o check fica vermelho e o merge acontece assim mesmo.');
+
+console.log('\nPassos MANUAIS que nenhum gate cobre:\n');
+console.log('1. Ligue a protecao de branch no repositorio remoto. O job de CI so vira');
+console.log('   barreira quando ela existe — sem ela, o check fica vermelho e o merge');
+console.log('   acontece assim mesmo.');
+
+// A pergunta e feita ao ARQUIVO, nunca a variavel de ambiente. O CI e preservado quando ja
+// existe, entao um `SDD_ORIGEM` setado nesta execucao nao diz nada sobre o que esta gravado
+// de uma execucao anterior — e o usuario pode ter preenchido a URL a mao no meio tempo. O
+// bootstrap ja verifica o proprio produto rodando os gates contra ele; isto e a mesma regra.
+if (await placeholderVivo()) {
+  console.log('');
+  console.log(`2. Preencha a origem do framework em .github/workflows/ci.yml — o passo`);
+  console.log(`   "Obter o framework" esta com ${PLACEHOLDER_ORIGEM} no lugar da URL.`);
+  console.log('   Como esta, o job FALHA no clone e nenhum gate roda no servidor.');
+  console.log('   Para o proximo projeto: `SDD_ORIGEM=<url> sdd-init` preenche sozinho.');
+}
 
 // ---------------------------------------------------------------------------
 
 async function existe(c) {
   return access(c).then(() => true, () => false);
+}
+
+/** O job de CI gravado neste projeto ainda tem o marcador no lugar da URL? */
+async function placeholderVivo() {
+  const alvo = join(projeto, '.github', 'workflows', 'ci.yml');
+  const texto = await readFile(alvo, 'utf8').catch(() => null);
+  // Arquivo ilegivel NAO vira "esta preenchido": nao saber e diferente de estar em ordem.
+  if (texto === null) return false;
+  return texto.includes(PLACEHOLDER_ORIGEM);
 }
 
 async function arquivos() {
@@ -133,7 +163,7 @@ function guiaDaMemoria() {
 }
 
 function ci() {
-  const origem = process.env.SDD_ORIGEM ?? '<URL-DO-REPOSITORIO-DO-FRAMEWORK>';
+  const origem = process.env.SDD_ORIGEM ?? PLACEHOLDER_ORIGEM;
   return `# Gates do Constitutional SDD.
 #
 # Este job e o unico enforcement que roda ONDE O AGENTE NAO ESCREVE. Tudo o mais — hook,
