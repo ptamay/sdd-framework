@@ -35,6 +35,36 @@ test('o manifesto e valido e declara versao EXPLICITA', async () => {
   assert.match(m.version, /^\d+\.\d+\.\d+$/, 'versao ausente ou fora de semver');
 });
 
+test('nenhum arquivo rastreado carrega credencial em formato COMPLETO', async () => {
+  // Guarda operacional, nao de seguranca: os valores em questao sao de documentacao publica
+  // e nao abrem nada. O que eles quebram e o PUSH — o secret scanning do GitHub casa por
+  // formato e recusa o repositorio inteiro, e o framework fica impublicavel por causa dos
+  // fixtures do proprio gate de segredos. Aconteceu na primeira tentativa de publicar.
+  //
+  // Sem este caso, a correcao e um `+` no meio de uma string que qualquer limpeza de estilo
+  // desfaz — e a falha so reaparece no proximo `git push`, meses depois, sem ninguem ligar
+  // uma coisa a outra.
+  //
+  // Os padroes sao montados aqui pela mesma razao que as amostras em secrets.test.mjs.
+  const padroes = [
+    ['Stripe', new RegExp('sk_' + 'live_[A-Za-z0-9]{24,}')],
+    ['Slack', new RegExp('xoxb' + '-[0-9]{6,}-[0-9]{6,}-[A-Za-z0-9]{10,}')],
+    ['GitHub token', new RegExp('ghp_' + '[A-Za-z0-9]{36}')],
+    ['AWS', new RegExp('AKIA' + '[0-9A-Z]{16}')],
+  ];
+
+  const { stdout } = await exec('git', ['ls-files'], { cwd: RAIZ });
+
+  for (const alvo of stdout.split('\n').filter(Boolean)) {
+    const texto = await readFile(join(RAIZ, alvo), 'utf8').catch(() => null);
+    if (texto === null) continue;
+
+    for (const [nome, padrao] of padroes) {
+      assert.doesNotMatch(texto, padrao, `${alvo} tem credencial ${nome} inteira — o push vai ser recusado`);
+    }
+  }
+});
+
 test('a versao NAO e redeclarada no package.json', async () => {
   // I-01 no unico numero que muda a cada entrega. Os dois binarios leem de plugin.json —
   // `sdd-gates` carimba essa versao no registro de execucao dentro do projeto do usuario.

@@ -40,18 +40,28 @@ test('identificador suspeito em portugues — head-initial (item 209)', () => {
   }
 });
 
+// As amostras sao montadas em PEDACOS, e isto nao e preciosismo de estilo.
+//
+// Escritas inteiras, o secret scanning do GitHub recusa o push deste repositorio: o
+// framework fica impublicavel por causa dos fixtures do proprio gate que procura segredo.
+// Medido em 2026-08-07, na primeira tentativa de publicar — Stripe e Slack bloquearam.
+//
+// Sao valores que as proprias empresas publicam na documentacao, mas o scanner casa por
+// FORMATO, nao por origem, e esta certo em fazer isso. Concatenar resolve na fonte, e sem
+// afrouxar caso nenhum: `acusa()` recebe a string identica.
+const AMOSTRAS = [
+  'AKIA' + 'IOSFODNN7EXAMPLE',
+  'sk_' + 'live_4eC39HqLyjWDarjtT1zdp7dc',
+  'ghp_' + '16C7e42F292c6912E7710c838347Ae178B4a',
+  'github_pat_' + '11ABCDEFG0abcdefghijkl_MNOPQRS',
+  'xoxb' + '-2334500-2334500-abcdefghijklmnop',
+  'AIza' + 'SyD-1234567890abcdefghijklmnopqrstu',
+];
+
 test('prefixo de credencial real com nome de variavel neutro (item 169, ramo 3b)', () => {
   // O ramo do nome nao cobre `const k = "sk_live_..."`: nome neutro, segredo real. Ali o
   // padrao tem de ser a propria chave.
-  const casos = [
-    'AKIA' + 'IOSFODNN7EXAMPLE',
-    'sk_' + 'live_4eC39HqLyjWDarjtT1zdp7dc',
-    'ghp_' + '16C7e42F292c6912E7710c838347Ae178B4a',
-    'github_pat_' + '11ABCDEFG0abcdefghijkl_MNOPQRS',
-    'xoxb' + '-2334500-2334500-abcdefghijklmnop',
-    'AIza' + 'SyD-1234567890abcdefghijklmnopqrstu',
-  ];
-  for (const chave of casos) {
+  for (const chave of AMOSTRAS) {
     assert.ok(acusa('src/a.ts', `const k = "${chave}";`), `passou: ${chave.slice(0, 12)}`);
   }
 });
@@ -59,7 +69,8 @@ test('prefixo de credencial real com nome de variavel neutro (item 169, ramo 3b)
 test('prefixo de chave real acusa TAMBEM em arquivo de exemplo (item 281)', () => {
   // Assimetria deliberada com o caso da connection string abaixo: para sk_live_ a
   // severidade esta certa e vale em todo lugar.
-  assert.ok(acusa('.env.example', 'STRIPE_KEY=sk_' + 'live_4eC39HqLyjWDarjtT1zdp7dc'));
+  const stripe = AMOSTRAS.find((a) => a.startsWith('sk_live_'));
+  assert.ok(acusa('.env.example', `STRIPE_KEY=${stripe}`));
 });
 
 test('chave privada PEM', () => {
