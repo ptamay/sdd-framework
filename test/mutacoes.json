@@ -232,6 +232,24 @@
       "efeito": "o job de CI nasce com o marcador no lugar da URL do framework, o clone falha e nenhum gate roda no servidor — e o relatorio diz \"bootstrap concluido\" declarando os OUTROS passos manuais, o que e pior que nao declarar nenhum: a secao parece completa",
       "de": "if (await placeholderVivo()) {",
       "para": "if (false) {"
+    },
+    {
+      "arquivo": "bin/sdd-init",
+      "suite": "init",
+      "origem": "v6 2026-08-07 — achado no projeto de teste, que nasceu em `master`",
+      "nome": "o gatilho de push do CI volta a ser `main` fixo",
+      "efeito": "num repositorio `master` — o default de quem nunca mexeu na config do git — o job nunca dispara nesse eixo. Sobra so o de pull_request, e o unico enforcement que roda ONDE O AGENTE NAO ESCREVE fica meio cego, com a aba de Actions parecendo em ordem",
+      "de": "    branches: [${branchPadrao.branch}]",
+      "para": "    branches: [main]"
+    },
+    {
+      "arquivo": "bin/sdd-init",
+      "suite": "init",
+      "origem": "v6 — a mesma classe que ja custou um gate e o frontmatter dos sub-agentes",
+      "nome": "o projeto deixa de nascer com .gitattributes",
+      "efeito": "em Windows, com core.autocrlf, os arquivos de memoria entram no git com CRLF. No framework isso ja desarmou um gate inteiro (o parser nao achava arquivo nenhum e reportou tudo como ausente) e ja derrubou o frontmatter dos agentes, que carregaram sem tools e sem model. Um \\r no fim da linha nao aparece em leitura nenhuma",
+      "de": "    '.gitattributes': gitattributes(),\n",
+      "para": ""
     }
   ]
 }

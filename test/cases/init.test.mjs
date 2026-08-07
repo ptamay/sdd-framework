@@ -28,11 +28,17 @@ const RAIZ = raizDoRepo();
 const INIT = join(RAIZ, 'bin', 'sdd-init');
 
 /** Repositorio novo, num caminho COM ESPACO. */
-async function repoNovo() {
+async function repoNovo(branch = 'main') {
+  const raiz = await dirNovo();
+  await exec('git', ['init', '-b', branch], { cwd: raiz });
+  return raiz;
+}
+
+/** Diretorio novo SEM `git init` — para o ramo em que nao ha repositorio. */
+async function dirNovo() {
   const base = await mkdtemp(join(tmpdir(), 'sdd-init-'));
   const raiz = join(base, 'meu projeto novo');
   await mkdir(raiz, { recursive: true });
-  await exec('git', ['init', '-b', 'main'], { cwd: raiz });
   return raiz;
 }
 
@@ -166,6 +172,60 @@ test('o bootstrap DECLARA os passos que nenhum gate cobre — TODOS eles', async
   assert.match(stdout, /protecao de branch|proteção de branch/i);
   assert.match(stdout, /<URL-DO-REPOSITORIO-DO-FRAMEWORK>/, 'o placeholder do CI nao foi declarado');
   assert.match(stdout, /FALHA no clone/, 'nao disse o que acontece se ficar como esta');
+});
+
+test('o gatilho de push segue o branch DO REPOSITORIO, nunca `main` fixo', async () => {
+  // `main` estava escrito no template. Num repositorio `master` — o default de quem nunca
+  // mexeu na config do git — o job nunca dispara nesse eixo, e sobra so o de pull_request.
+  // Enforcement que silenciosamente nao roda: a classe que o CI existe para nao ser.
+  for (const branch of ['master', 'main', 'principal']) {
+    const raiz = await repoNovo(branch);
+    await rodarInit(raiz);
+
+    const ci = await readFile(join(raiz, '.github', 'workflows', 'ci.yml'), 'utf8');
+    assert.match(ci, new RegExp(`branches: \\[${branch}\\]`), `gatilho nao seguiu "${branch}"`);
+  }
+});
+
+test('sem repositorio git o branch cai no padrao, e o bootstrap DECLARA o chute', async () => {
+  // Chutar em silencio aqui produz um CI que existe, aparece na aba de Actions e nunca
+  // dispara — que e indistinguivel de um CI que rodou e aprovou.
+  const raiz = await dirNovo();
+  const { stdout } = await rodarInit(raiz);
+
+  const ci = await readFile(join(raiz, '.github', 'workflows', 'ci.yml'), 'utf8');
+  assert.match(ci, /branches: \[main\]/);
+  assert.match(stdout, /Nao deu para detectar o/, 'chutou o branch sem declarar');
+});
+
+test('o projeto nasce com .gitattributes cobrindo o que o framework LE', async () => {
+  // Duas ocorrencias dentro do proprio framework: CRLF desarmou um gate inteiro e depois
+  // derrubou o frontmatter dos sub-agentes. Aqui o alvo sao os arquivos de memoria.
+  const raiz = await repoNovo();
+  await rodarInit(raiz);
+
+  const attr = await readFile(join(raiz, '.gitattributes'), 'utf8');
+  assert.match(attr, /\.sdd\/\*\*\s+text eol=lf/);
+
+  // O padrao tem de FUNCIONAR, nao so estar escrito — quem responde e o git.
+  const { stdout } = await exec('git', ['check-attr', 'eol', '--', '.sdd/coverage-min'], {
+    cwd: raiz,
+  });
+  assert.match(stdout, /eol: lf/, 'o padrao nao alcanca as valvulas sem extensao');
+
+  // E NAO opina sobre o codigo do usuario: a stack dele pode ter motivo proprio.
+  assert.doesNotMatch(attr, /^\*\s+text=auto/m, 'o bootstrap imposse convencao ao projeto');
+});
+
+test('.gitattributes preservado que nao cobre .sdd/ e DECLARADO', async () => {
+  // Pior que ausente: existe, parece cuidado tomado, e deixa passar exatamente os arquivos
+  // que o framework le.
+  const raiz = await repoNovo();
+  await writeFile(join(raiz, '.gitattributes'), '* text=auto\n');
+  const { stdout } = await rodarInit(raiz);
+
+  assert.match(stdout, /nao menciona/);
+  assert.match(stdout, /\.sdd\/\*\* text eol=lf/);
 });
 
 test('com SDD_ORIGEM setada, o bootstrap NAO declara um placeholder que nao existe', async () => {

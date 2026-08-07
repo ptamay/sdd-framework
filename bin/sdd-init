@@ -20,6 +20,8 @@
 //                       bootstrap.
 
 import { mkdir, writeFile, access, readFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { join, dirname } from 'node:path';
 
 import { raizDoRepo, gatesAtivos } from '../gates/lib/policy.mjs';
@@ -40,6 +42,14 @@ const { version: versaoDoPlugin } = JSON.parse(
 // "bootstrap concluido" com um CI que nao clona nada. Lacuna omitida vira "achavamos que
 // estava protegido", que e a frase que o gate `context` existe para nunca precisar.
 const PLACEHOLDER_ORIGEM = '<URL-DO-REPOSITORIO-DO-FRAMEWORK>';
+
+const exec = promisify(execFile);
+
+// O gatilho de push do CI vinha fixado em `main`. Num repositorio `master` — o default de
+// quem nunca mexeu na config do git — o job nunca dispara nesse eixo, e sobra so o de
+// pull_request. Enforcement que silenciosamente nao roda e o defeito que este arquivo
+// inteiro existe para nao cometer, e ele estava escrito na linha 153.
+const branchPadrao = await detectarBranchPadrao();
 
 const criados = [];
 const preservados = [];
@@ -79,27 +89,98 @@ if (relatorio.veredito === 'reprovado') {
 console.log('\n# Proximo passo\n');
 console.log('  /sdd:escopo        define o que o sistema faz');
 
-console.log('\nPassos MANUAIS que nenhum gate cobre:\n');
-console.log('1. Ligue a protecao de branch no repositorio remoto. O job de CI so vira');
-console.log('   barreira quando ela existe — sem ela, o check fica vermelho e o merge');
-console.log('   acontece assim mesmo.');
+// A lista e MONTADA, nunca numerada a mao. Item condicional com numero fixo escrito ao lado
+// ja produziu, na primeira versao deste relatorio, um "1." sozinho — e o "2." que faltava
+// era justamente a lacuna que o texto existia para declarar.
+const manuais = [
+  [
+    'Ligue a protecao de branch no repositorio remoto. O job de CI so vira barreira',
+    'quando ela existe — sem ela, o check fica vermelho e o merge acontece assim mesmo.',
+  ],
+];
 
 // A pergunta e feita ao ARQUIVO, nunca a variavel de ambiente. O CI e preservado quando ja
 // existe, entao um `SDD_ORIGEM` setado nesta execucao nao diz nada sobre o que esta gravado
 // de uma execucao anterior — e o usuario pode ter preenchido a URL a mao no meio tempo. O
 // bootstrap ja verifica o proprio produto rodando os gates contra ele; isto e a mesma regra.
 if (await placeholderVivo()) {
-  console.log('');
-  console.log(`2. Preencha a origem do framework em .github/workflows/ci.yml — o passo`);
-  console.log(`   "Obter o framework" esta com ${PLACEHOLDER_ORIGEM} no lugar da URL.`);
-  console.log('   Como esta, o job FALHA no clone e nenhum gate roda no servidor.');
-  console.log('   Para o proximo projeto: `SDD_ORIGEM=<url> sdd-init` preenche sozinho.');
+  manuais.push([
+    'Preencha a origem do framework em .github/workflows/ci.yml — o passo "Obter o',
+    `framework" esta com ${PLACEHOLDER_ORIGEM} no lugar da URL.`,
+    'Como esta, o job FALHA no clone e nenhum gate roda no servidor.',
+    'Para os proximos projetos: `SDD_ORIGEM=<url> sdd-init` preenche sozinho.',
+  ]);
 }
+
+if (!branchPadrao.detectado) {
+  manuais.push([
+    'Confira o gatilho de push em .github/workflows/ci.yml. Nao deu para detectar o',
+    `branch default deste repositorio, entao ficou "${branchPadrao.branch}" por padrao.`,
+    'Se o seu for outro, o job nunca dispara nesse eixo.',
+  ]);
+}
+
+const lacunaDeEol = await gitattributesDescoberto();
+if (lacunaDeEol) manuais.push(lacunaDeEol);
+
+console.log('\nPassos MANUAIS que nenhum gate cobre:\n');
+manuais.forEach((linhas, i) => {
+  console.log(`${i + 1}. ${linhas[0]}`);
+  for (const l of linhas.slice(1)) console.log(`   ${l}`);
+  if (i < manuais.length - 1) console.log('');
+});
 
 // ---------------------------------------------------------------------------
 
 async function existe(c) {
   return access(c).then(() => true, () => false);
+}
+
+/**
+ * Qual branch o gatilho de push do CI deve observar?
+ *
+ * Duas fontes, nesta ordem, e a ordem e o ponto:
+ *
+ *   remote   `origin/HEAD` e a resposta AUTORITATIVA — e o default que o servidor publica,
+ *            que e exatamente onde o job vai rodar.
+ *   local    o branch atual. Num repositorio recem-criado ele E o default por construcao,
+ *            que e o caso normal de quem roda o bootstrap.
+ *
+ * Falhou tudo (nao e repo git, HEAD destacado): cai em `main` e DECLARA. Chutar em silencio
+ * aqui produz um CI que existe, aparece na aba de Actions e nunca dispara.
+ *
+ * Limite conhecido: rodar o bootstrap de dentro de um branch de trabalho, num repo sem
+ * remote, grava aquele branch. E visivel no arquivo gerado e o passo manual de protecao de
+ * branch leva o usuario ali de qualquer forma.
+ */
+async function detectarBranchPadrao() {
+  const git = async (...args) =>
+    exec('git', args, { cwd: projeto }).then((r) => r.stdout.trim(), () => null);
+
+  const remoto = await git('symbolic-ref', '--short', 'refs/remotes/origin/HEAD');
+  if (remoto) return { branch: remoto.replace(/^origin\//, ''), detectado: true };
+
+  const local = await git('symbolic-ref', '--short', 'HEAD');
+  if (local) return { branch: local, detectado: true };
+
+  return { branch: 'main', detectado: false };
+}
+
+/**
+ * `.gitattributes` preservado que nao cobre `.sdd/` e pior que ausente: ele existe, parece
+ * cuidado tomado, e deixa passar exatamente os arquivos que o framework le.
+ */
+async function gitattributesDescoberto() {
+  if (!preservados.includes('.gitattributes')) return null;
+
+  const texto = await readFile(join(projeto, '.gitattributes'), 'utf8').catch(() => null);
+  if (texto === null || texto.includes('.sdd/')) return null;
+
+  return [
+    'Seu .gitattributes foi preservado e nao menciona `.sdd/`. Acrescente',
+    '`.sdd/** text eol=lf` — sem isso, em Windows os arquivos de memoria entram no git',
+    'com CRLF, e um \\r no fim da linha nao aparece em leitura nenhuma.',
+  ];
 }
 
 /** O job de CI gravado neste projeto ainda tem o marcador no lugar da URL? */
@@ -128,7 +209,38 @@ async function arquivos() {
     '.sdd/coverage-min': `${min}\n`,
     '.github/workflows/ci.yml': ci(),
     '.claude/settings.json': settings(),
+    '.gitattributes': gitattributes(),
   };
+}
+
+/**
+ * Fim de linha do que O FRAMEWORK le, e SO disso.
+ *
+ * O escopo e a decisao aqui. Um `* text=auto` imporia a convencao do framework ao codigo do
+ * usuario, que nao e nosso para decidir — a stack dele pode ter motivo proprio. O que e
+ * nosso sao `.sdd/` e o job de CI.
+ *
+ * A licao vem de duas ocorrencias dentro do proprio framework: a conversao CRLF desarmou um
+ * gate inteiro (o arquivo parseado vinha com \r colado no fim de cada caminho, nada era
+ * encontrado, e o gate reportou tudo como ausente sem comparar um hash), e depois derrubou o
+ * frontmatter dos sub-agentes, que passaram a carregar sem `tools` e sem `model`.
+ *
+ * Aqui o alvo sao os arquivos de memoria que nascem na rota de arquitetura: eles sao lidos,
+ * e um `\r` no fim da linha e invisivel em toda leitura humana.
+ */
+function gitattributes() {
+  return `# Fim de linha do que o Constitutional SDD le. Prevencao na origem.
+#
+# So o que e do framework entra aqui. O codigo do seu projeto segue a convencao que voce
+# escolher — esta lista nao opina sobre ele.
+#
+# No framework, a conversao CRLF ja desarmou um gate inteiro e ja derrubou o frontmatter dos
+# sub-agentes, que passaram a carregar sem restricao de ferramenta. Nos dois casos a falha
+# foi muda: \\r no fim da linha nao aparece em leitura nenhuma.
+
+.sdd/**                     text eol=lf
+.github/workflows/ci.yml    text eol=lf
+`;
 }
 
 /** O guia da memoria e DERIVADO do contrato. Escrito a mao, ele seria a segunda fonte. */
@@ -180,7 +292,7 @@ name: gates
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [${branchPadrao.branch}]
 
 jobs:
   gates:
