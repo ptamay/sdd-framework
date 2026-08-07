@@ -51,6 +51,12 @@ const exec = promisify(execFile);
 // inteiro existe para nao cometer, e ele estava escrito na linha 153.
 const branchPadrao = await detectarBranchPadrao();
 
+// Mesma classe do branch: exigir que o usuario DIGITE `SDD_ORIGEM` toda vez e um passo
+// manual que ninguem lembra na segunda execucao. O FRAMEWORK sabe a propria URL — ele e um
+// repositorio git, e uma vez publicado tem `origin`. Perguntar a ele em vez de perguntar ao
+// usuario transforma "lembre de passar a URL" em "publique o framework uma vez".
+const origemDoFramework = await detectarOrigemDoFramework();
+
 const criados = [];
 const preservados = [];
 
@@ -104,12 +110,22 @@ const manuais = [
 // de uma execucao anterior — e o usuario pode ter preenchido a URL a mao no meio tempo. O
 // bootstrap ja verifica o proprio produto rodando os gates contra ele; isto e a mesma regra.
 if (await placeholderVivo()) {
-  manuais.push([
-    'Preencha a origem do framework em .github/workflows/ci.yml — o passo "Obter o',
-    `framework" esta com ${PLACEHOLDER_ORIGEM} no lugar da URL.`,
-    'Como esta, o job FALHA no clone e nenhum gate roda no servidor.',
-    'Para os proximos projetos: `SDD_ORIGEM=<url> sdd-init` preenche sozinho.',
-  ]);
+  manuais.push(
+    origemDoFramework
+      ? [
+          'Preencha a origem do framework em .github/workflows/ci.yml — o passo "Obter o',
+          `framework" esta com ${PLACEHOLDER_ORIGEM} no lugar da URL.`,
+          `O framework local ja aponta para ${origemDoFramework} — para os proximos`,
+          'projetos, deletar o placeholder e rodar `sdd-init` de novo preenche sozinho.',
+        ]
+      : [
+          'Preencha a origem do framework em .github/workflows/ci.yml — o passo "Obter o',
+          `framework" esta com ${PLACEHOLDER_ORIGEM} no lugar da URL.`,
+          'Como esta, o job FALHA no clone e nenhum gate roda no servidor. O framework',
+          'local nao tem remote configurado, entao nao ha URL para detectar sozinho —',
+          'publique-o e rode `sdd-init` de novo, ou preencha esta linha a mao.',
+        ],
+  );
 }
 
 if (!branchPadrao.detectado) {
@@ -181,6 +197,20 @@ async function gitattributesDescoberto() {
     '`.sdd/** text eol=lf` — sem isso, em Windows os arquivos de memoria entram no git',
     'com CRLF, e um \\r no fim da linha nao aparece em leitura nenhuma.',
   ];
+}
+
+/**
+ * URL do `origin` do PROPRIO framework — nao do projeto sendo criado.
+ *
+ * `git remote get-url` falha (exit != 0) tanto quando o framework nao e um repositorio git
+ * quanto quando e um repositorio sem remote configurado. As duas sao "nao sei", nunca "e
+ * vazio": tratadas iguais, caem para SDD_ORIGEM ou para o placeholder.
+ */
+async function detectarOrigemDoFramework() {
+  return exec('git', ['remote', 'get-url', 'origin'], { cwd: FRAMEWORK }).then(
+    (r) => r.stdout.trim() || null,
+    () => null,
+  );
 }
 
 /** O job de CI gravado neste projeto ainda tem o marcador no lugar da URL? */
@@ -275,7 +305,11 @@ function guiaDaMemoria() {
 }
 
 function ci() {
-  const origem = process.env.SDD_ORIGEM ?? PLACEHOLDER_ORIGEM;
+  // Precedencia: SDD_ORIGEM explicita > remote do framework > placeholder. Explicito vence
+  // porque e a unica forma de o usuario apontar para um FORK ou espelho diferente do que o
+  // framework local tem configurado — auto-deteccao nunca deve silenciar uma escolha feita
+  // a dedo.
+  const origem = process.env.SDD_ORIGEM ?? origemDoFramework ?? PLACEHOLDER_ORIGEM;
   return `# Gates do Constitutional SDD.
 #
 # Este job e o unico enforcement que roda ONDE O AGENTE NAO ESCREVE. Tudo o mais — hook,

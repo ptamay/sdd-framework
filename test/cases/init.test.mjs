@@ -14,7 +14,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile, mkdir, access } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, mkdir, access, cp } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
@@ -39,6 +39,30 @@ async function dirNovo() {
   const base = await mkdtemp(join(tmpdir(), 'sdd-init-'));
   const raiz = join(base, 'meu projeto novo');
   await mkdir(raiz, { recursive: true });
+  return raiz;
+}
+
+/**
+ * Clone MINIMO do framework, so para controlar o que `sdd-init` enxerga como a propria
+ * origem — via CLAUDE_PLUGIN_ROOT, o mesmo mecanismo que `raizDoRepo()` ja prefere.
+ *
+ * Copia SO policy/ e .claude-plugin/: e tudo que o bootstrap LE de FRAMEWORK. O codigo
+ * (gates/run.mjs, gates/lib/policy.mjs) continua vindo do REAL, porque sdd-init importa por
+ * caminho relativo ao proprio arquivo, nunca por CLAUDE_PLUGIN_ROOT.
+ *
+ * Sem isto, todo caso que depende de "o framework tem remote?" ou "nao tem?" estaria preso
+ * ao estado do REPOSITORIO REAL no momento em que o teste roda — e o dia em que este `v6`
+ * ganhar um `origin` de verdade (o proximo passo natural depois desta sessao), os casos que
+ * esperavam o placeholder quebrariam sozinhos, sem ninguem ter mudado uma linha de teste.
+ */
+async function frameworkFalso({ remote } = {}) {
+  const raiz = await dirNovo();
+  await cp(join(RAIZ, 'policy'), join(raiz, 'policy'), { recursive: true });
+  await cp(join(RAIZ, '.claude-plugin'), join(raiz, '.claude-plugin'), { recursive: true });
+
+  await exec('git', ['init', '-q'], { cwd: raiz });
+  if (remote) await exec('git', ['remote', 'add', 'origin', remote], { cwd: raiz });
+
   return raiz;
 }
 
@@ -165,13 +189,44 @@ test('o bootstrap DECLARA os passos que nenhum gate cobre — TODOS eles', async
   // declarou esse um, omitiu o segundo, e passou: o CI nasceu com o marcador no lugar da
   // URL do framework e o relatorio disse "concluido". Um caso que exige um item de uma
   // lista nao guarda a lista — ele guarda o primeiro item.
+  // O framework local NAO tem remote aqui — de proposito, controlado, independente do que
+  // o `v6` real tiver configurado no momento em que este teste roda.
+  const framework = await frameworkFalso();
   const raiz = await repoNovo();
-  const { stdout } = await rodarInit(raiz);
+  const { stdout } = await rodarInit(raiz, { CLAUDE_PLUGIN_ROOT: framework });
 
   assert.match(stdout, /MANUAIS/);
   assert.match(stdout, /protecao de branch|proteção de branch/i);
   assert.match(stdout, /<URL-DO-REPOSITORIO-DO-FRAMEWORK>/, 'o placeholder do CI nao foi declarado');
   assert.match(stdout, /FALHA no clone/, 'nao disse o que acontece se ficar como esta');
+});
+
+test('o framework com `origin` preenche a URL do CI sozinho — sem SDD_ORIGEM', async () => {
+  // O ponto inteiro da auto-deteccao: publicar o framework UMA VEZ substitui "lembre de
+  // digitar SDD_ORIGEM em toda maquina, para sempre".
+  const origem = 'https://github.com/exemplo/sdd-framework.git';
+  const framework = await frameworkFalso({ remote: origem });
+  const raiz = await repoNovo();
+  const { stdout } = await rodarInit(raiz, { CLAUDE_PLUGIN_ROOT: framework });
+
+  assert.doesNotMatch(stdout, /<URL-DO-REPOSITORIO-DO-FRAMEWORK>/, 'nao usou o remote do framework');
+
+  const ci = await readFile(join(raiz, '.github', 'workflows', 'ci.yml'), 'utf8');
+  assert.ok(ci.includes(origem), 'a URL detectada nao foi gravada no job');
+});
+
+test('SDD_ORIGEM explicita vence o remote do framework — nunca o contrario', async () => {
+  // Auto-deteccao nunca pode silenciar uma escolha feita a dedo: e a unica forma de apontar
+  // para um FORK ou espelho diferente do que o framework local tem configurado.
+  const doFramework = 'https://github.com/exemplo/sdd-framework.git';
+  const doFork = 'https://github.com/outra-conta/sdd-framework-fork.git';
+  const framework = await frameworkFalso({ remote: doFramework });
+  const raiz = await repoNovo();
+  await rodarInit(raiz, { CLAUDE_PLUGIN_ROOT: framework, SDD_ORIGEM: doFork });
+
+  const ci = await readFile(join(raiz, '.github', 'workflows', 'ci.yml'), 'utf8');
+  assert.ok(ci.includes(doFork), 'a URL explicita nao venceu');
+  assert.ok(!ci.includes(doFramework), 'o remote do framework vazou por cima da URL explicita');
 });
 
 test('o gatilho de push segue o branch DO REPOSITORIO, nunca `main` fixo', async () => {
@@ -231,9 +286,10 @@ test('.gitattributes preservado que nao cobre .sdd/ e DECLARADO', async () => {
 test('com SDD_ORIGEM setada, o bootstrap NAO declara um placeholder que nao existe', async () => {
   // A outra direcao. Declaracao que aparece sempre vira ruido, e ruido e o que ensina alguem
   // a parar de ler a secao inteira — inclusive o item que era verdade.
+  const framework = await frameworkFalso();
   const raiz = await repoNovo();
   const origem = 'https://exemplo.invalido/sdd.git';
-  const { stdout } = await rodarInit(raiz, { SDD_ORIGEM: origem });
+  const { stdout } = await rodarInit(raiz, { CLAUDE_PLUGIN_ROOT: framework, SDD_ORIGEM: origem });
 
   assert.doesNotMatch(stdout, /<URL-DO-REPOSITORIO-DO-FRAMEWORK>/);
   assert.match(stdout, /protecao de branch|proteção de branch/i, 'o passo que continua valendo sumiu junto');

@@ -250,6 +250,24 @@
       "efeito": "em Windows, com core.autocrlf, os arquivos de memoria entram no git com CRLF. No framework isso ja desarmou um gate inteiro (o parser nao achava arquivo nenhum e reportou tudo como ausente) e ja derrubou o frontmatter dos agentes, que carregaram sem tools e sem model. Um \\r no fim da linha nao aparece em leitura nenhuma",
       "de": "    '.gitattributes': gitattributes(),\n",
       "para": ""
+    },
+    {
+      "arquivo": "bin/sdd-init",
+      "suite": "init",
+      "origem": "v6 2026-08-07 — o defeito que a auto-deteccao existe para prevenir",
+      "nome": "a origem do proprio framework deixa de ser tentada, so a variavel de ambiente conta",
+      "efeito": "publicar o framework deixa de bastar — quem esquecer SDD_ORIGEM continua recebendo placeholder mesmo com o framework ja tendo remote configurado, exatamente o defeito que motivou a auto-deteccao: lembrar de digitar toda vez",
+      "de": "const origem = process.env.SDD_ORIGEM ?? origemDoFramework ?? PLACEHOLDER_ORIGEM;",
+      "para": "const origem = process.env.SDD_ORIGEM ?? PLACEHOLDER_ORIGEM;"
+    },
+    {
+      "arquivo": "bin/sdd-init",
+      "suite": "init",
+      "origem": "v6 2026-08-07 — a outra metade da regra de precedencia",
+      "nome": "o remote do framework passa a vencer SDD_ORIGEM explicita",
+      "efeito": "quem aponta de proposito para um FORK ou espelho diferente deixa de conseguir: a auto-deteccao pisa na escolha feita a dedo, e silenciosamente — nao ha erro, so a URL errada no job",
+      "de": "const origem = process.env.SDD_ORIGEM ?? origemDoFramework ?? PLACEHOLDER_ORIGEM;",
+      "para": "const origem = origemDoFramework ?? process.env.SDD_ORIGEM ?? PLACEHOLDER_ORIGEM;"
     }
   ]
 }
