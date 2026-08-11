@@ -65,6 +65,25 @@ test('prefixo node: nao e acusado', () => {
   assert.ok(!acusa([arq('src/a.mjs', "import { test } from 'node:test';")]));
 });
 
+test('modulo virtual de runtime nao e acusado — `cloudflare:` esta para o workerd como `node:` para o Node', () => {
+  // Achado em projeto real (Portifolio Igor, task 1.11): `import { env } from
+  // "cloudflare:workers"` e o UNICO caminho ate os bindings do D1 desde o Astro v6, e o gate
+  // acusava alucinacao onde havia API de plataforma. O `npm run build` do projeto provava o
+  // contrario — o modulo resolve no workerd. Gate que reprova quem esta certo (M-02).
+  for (const e of ['cloudflare:workers', 'cloudflare:sockets', 'cloudflare:email']) {
+    assert.ok(!acusa([arq('src/a.ts', `import x from '${e}';`)]), `acusou virtual: ${e}`);
+  }
+});
+
+test('o namespace virtual NAO abre a porta para esquema qualquer', () => {
+  // A trava do caso acima, e a razao de a lista ser NOMEADA em vez de um `/^[a-z]+:/`: um
+  // padrao de esquema qualquer engoliria URL remota e todo nome inventado com dois-pontos.
+  // Cada namespace entra na lista com evidencia de que o runtime o serve, um de cada vez.
+  for (const e of ['inventado:coisa', 'https://cdn.exemplo/x.js', 'npm:pacote-que-nao-existe']) {
+    assert.ok(acusa([arq('src/a.ts', `import x from '${e}';`)]), `deixou passar: ${e}`);
+  }
+});
+
 test('caminho relativo nao e pacote', () => {
   for (const e of ['./util', '../lib/x', './a.js']) {
     assert.ok(!acusa([arq('src/a.ts', `import x from '${e}';`)]), `acusou relativo: ${e}`);
