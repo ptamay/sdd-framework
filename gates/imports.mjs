@@ -22,6 +22,28 @@ import { compilarIsencoes } from './lib/isencoes.mjs';
 
 const BUILTINS = new Set(builtinModules);
 
+/**
+ * Namespaces de MODULO VIRTUAL servido pelo runtime — o `node:` de outras plataformas.
+ *
+ * Nao sao pacotes: nao se instalam, nao aparecem em manifesto nenhum, e quem os resolve e o
+ * runtime. Acusa-los e reprovar quem esta certo (M-02), que e a metade do item 208 que este
+ * gate ja errou uma vez com os builtins do Node.
+ *
+ * A lista e NOMEADA, e nao um `/^[a-z]+:/`, e essa e a decisao que importa: um padrao de
+ * esquema qualquer engoliria `https://cdn/x.js` e todo nome inventado com dois-pontos, e o
+ * gate anti-alucinacao perderia justamente o que ele existe para pegar. Cada entrada aqui
+ * chega com evidencia de que o runtime serve o modulo, uma de cada vez.
+ *
+ *   cloudflare:   workerd. Achado no projeto Portifolio Igor, task 1.11: `cloudflare:workers`
+ *                 e o unico caminho ate os bindings desde o Astro v6 — `locals.runtime.env`
+ *                 foi removido. O `astro build` do projeto prova a resolucao.
+ *
+ * Candidatos que NAO entraram por falta de evidencia em projeto real: `bun:`, `astro:`
+ * (`astro:content`, `astro:assets`), `virtual:` (plugin de Vite). Entram quando algum projeto
+ * mostrar o caso — nao antes.
+ */
+const NAMESPACES_VIRTUAIS = ['cloudflare:'];
+
 const JS = /\.(js|jsx|mjs|cjs|ts|tsx|mts|cts)$/i;
 const PY = /\.py$/i;
 
@@ -85,6 +107,7 @@ function ehLocal(especificador) {
     especificador.startsWith('@/') ||       // alias de tsconfig/bundler
     especificador.startsWith('~') ||        // alias de bundler
     especificador.startsWith('node:') ||    // builtin explicito
+    NAMESPACES_VIRTUAIS.some((ns) => especificador.startsWith(ns)) || // modulo do runtime
     BUILTINS.has(pacoteBase(especificador))
   );
 }
