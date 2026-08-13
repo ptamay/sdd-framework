@@ -262,7 +262,14 @@ test('o checkout do job pede o historico INTEIRO, ou o gate 4 audita um commit s
   await rodarInit(raiz);
 
   const ci = await readFile(join(raiz, '.github', 'workflows', 'ci.yml'), 'utf8');
-  const checkout = ci.split(/\n(?=\s*- )/).find((passo) => passo.includes('actions/checkout'));
+
+  // COMENTARIO NAO CONTA, e a primeira versao deste caso nao sabia disso: o template DOCUMENTA o
+  // `fetch-depth: 0` em prosa, citando `actions/checkout` pelo nome, e o `find` abaixo pegava o
+  // bloco do COMENTARIO em vez do passo. O caso passava com o checkout raso — verificando zero.
+  // Quem pegou foi a mutacao deste mesmo commit (`npm run mutar`, FURO), que e literalmente para
+  // isso que ela existe.
+  const passos = ci.replace(/^[ \t]*#.*$/gm, '').split(/\n(?=\s*- )/);
+  const checkout = passos.find((passo) => passo.includes('actions/checkout'));
 
   assert.ok(checkout, 'o job nasceu sem passo de checkout');
   assert.match(

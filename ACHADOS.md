@@ -12,7 +12,7 @@ ali, todo veredito de gate vinha de execução local, e os dois defeitos são in
 
 ---
 
-## A1 · `sdd:init` gera um CI que cega o gate 4 — CONFIRMADO, com medição
+## A1 · `sdd:init` gera um CI que cega o gate 4 — CONSERTADO em 2026-08-13
 
 `bin/sdd-init:335` emite o passo de checkout assim:
 
@@ -45,8 +45,19 @@ até publicar.
 ```
 
 **Caso que falha antes:** o YAML gerado por `sdd-init` contém `fetch-depth: 0` no passo de checkout.
-Um segundo caso, no gate 4, é o que fecha de verdade: **clone raso não pode sair como `pulado`** —
-ver A4.
+Existe em `test/cases/init.test.mjs`, com a mutação correspondente no catálogo (`test/mutacoes.json`)
+— reintroduzir o checkout raso derruba o caso.
+
+**O que aconteceu ao escrever esse caso, e vale mais do que o conserto:** a primeira versão dele
+**passava com o defeito reintroduzido**. O comentário que o conserto acrescentou ao template
+documenta o `fetch-depth: 0` em prosa e cita `actions/checkout` pelo nome; o caso procurava o passo
+por `includes` e achava o bloco do **comentário**. Verificava zero, com aparência de prova. Quem
+pegou foi `npm run mutar` — `FURO — nenhum caso caiu com o defeito reintroduzido` —, que é
+literalmente para isso que a mutação existe. Corrigido tirando comentário antes de procurar.
+
+**Ainda aberto, e é o que fecha de verdade:** clone raso não pode sair como `pulado`. Enquanto o
+gate 4 não distinguir "não pude auditar" de "não havia o que auditar", o mesmo defeito volta em
+qualquer outra forma de histórico incompleto — ver A4.
 
 ---
 

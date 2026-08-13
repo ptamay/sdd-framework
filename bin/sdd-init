@@ -332,7 +332,14 @@ jobs:
   gates:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 NAO e preferencia. O default do actions/checkout e 1 — um commit — e o
+      # gate 4 compara o commit de teste com o de implementacao num RANGE de historico. Sem
+      # historico ele nao tem o que comparar e sai \`pulado\`, sem reprovar nada: o gate que pega
+      # "commitei o teste depois" fica cego exatamente aqui, no unico enforcement que roda onde o
+      # agente nao escreve. Medido em projeto real, na primeira vez que este job rodou de verdade.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:

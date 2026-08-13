@@ -268,6 +268,15 @@
       "efeito": "quem aponta de proposito para um FORK ou espelho diferente deixa de conseguir: a auto-deteccao pisa na escolha feita a dedo, e silenciosamente — nao ha erro, so a URL errada no job",
       "de": "const origem = process.env.SDD_ORIGEM ?? origemDoFramework ?? PLACEHOLDER_ORIGEM;",
       "para": "const origem = origemDoFramework ?? process.env.SDD_ORIGEM ?? PLACEHOLDER_ORIGEM;"
+    },
+    {
+      "arquivo": "bin/sdd-init",
+      "suite": "init",
+      "origem": "v6 2026-08-12 — primeira execucao real do CI de um projeto gerado pelo bootstrap",
+      "nome": "o checkout do job volta a clonar so o commit da ponta",
+      "efeito": "o gate 4 (tdd-order) sai `pulado` no runner mesmo com violacao de ordem TDD no historico, porque nao ha historico para auditar. O unico enforcement que roda fora da maquina de quem gera o codigo fica cego justamente no gate que pega 'commitei o teste depois' — e o relatorio le como aprovacao. Nao aparece em execucao local nenhuma: so publicando",
+      "de": "      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0",
+      "para": "      - uses: actions/checkout@v4"
     }
   ]
 }
