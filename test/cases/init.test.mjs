@@ -242,6 +242,36 @@ test('o gatilho de push segue o branch DO REPOSITORIO, nunca `main` fixo', async
   }
 });
 
+test('o checkout do job pede o historico INTEIRO, ou o gate 4 audita um commit so', async () => {
+  // MEDIDO em projeto real, 2026-08-12, na primeira vez que o job rodou de verdade — e este
+  // achado nao aparece de nenhuma outra forma. O gate 4 saiu `pulado` no runner, com a mensagem
+  // "nenhum commit de implementacao com escopo de task na janela auditada", num repositorio com
+  // tres commits de teste ANTES da implementacao, todos na ordem certa. Local, na mesma arvore,
+  // `[ok]`. A causa e o default do actions/checkout: `fetch-depth: 1`. Um commit so, e o gate que
+  // compara teste com implementacao num RANGE de historico nao tem o que comparar.
+  //
+  // E o pior lugar possivel para um gate cego. O cabecalho que este proprio bootstrap escreve no
+  // ci.yml diz que o job e "o unico enforcement que roda ONDE O AGENTE NAO ESCREVE", e cita o
+  // item do v5: um agente reescreveu a regra de seguranca numero 1, rodou a selagem sozinho,
+  // commitou e recebeu aprovacao de todos os gates locais. Commitar o teste depois e exatamente
+  // o que o gate 4 pega — e era o unico cego la.
+  //
+  // Mesma licao do cabecalho deste arquivo, um nivel acima: fixture de gate prova o gate, rodar
+  // o bootstrap prova o bootstrap, e so PUBLICAR prova o CI.
+  const raiz = await repoNovo();
+  await rodarInit(raiz);
+
+  const ci = await readFile(join(raiz, '.github', 'workflows', 'ci.yml'), 'utf8');
+  const checkout = ci.split(/\n(?=\s*- )/).find((passo) => passo.includes('actions/checkout'));
+
+  assert.ok(checkout, 'o job nasceu sem passo de checkout');
+  assert.match(
+    checkout,
+    /fetch-depth:\s*0/,
+    'checkout raso: no runner o gate 4 pula sem reprovar nada, e o relatorio le como aprovacao',
+  );
+});
+
 test('sem repositorio git o branch cai no padrao, e o bootstrap DECLARA o chute', async () => {
   // Chutar em silencio aqui produz um CI que existe, aparece na aba de Actions e nunca
   // dispara — que e indistinguivel de um CI que rodou e aprovou.
