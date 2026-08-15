@@ -19,7 +19,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -260,4 +260,39 @@ test('contexto: payload ilegivel sai calado', async () => {
 
   assert.equal(codigo, 0);
   assert.equal(saida, '');
+});
+
+test('contexto: lista TODO arquivo de memoria que o catalogo declara, e nao uma lista propria', async () => {
+  // O mesmo defeito que este framework existe para impedir, dentro dele: a lista de arquivos
+  // de memoria estava FIXA no hook, e o catalogo (`policy/memoria.json`) e quem a declara.
+  //
+  // O sintoma era mudo e ja durava: `overview.md` nunca apareceu no contexto de sessao de
+  // projeto nenhum, porque a lista fixa tinha quatro nomes e o catalogo tem seis. Ninguem
+  // percebe a ausencia de um arquivo que nunca esteve la — e a rota `design` acabaria de
+  // acrescentar o setimo caso do mesmo silencio.
+  //
+  // O caso compara contra o CATALOGO, nao contra uma lista escrita aqui: uma segunda lista
+  // no teste seria a terceira copia do mesmo fato, que e a doenca, nao o remedio.
+  const memoria = JSON.parse(await readFile(join(RAIZ, 'policy', 'memoria.json'), 'utf8'));
+  const raiz = await novaRaiz();
+
+  try {
+    await mkdir(join(raiz, '.sdd', 'memory'), { recursive: true });
+    await writeFile(join(raiz, '.sdd', 'framework.json'), '{}\n');
+    for (const a of memoria.arquivos) {
+      await writeFile(join(raiz, '.sdd', 'memory', a.arquivo), `# ${a.id}\n`);
+    }
+
+    const { saida } = await rodarHook('contexto.mjs', { cwd: raiz });
+
+    for (const a of memoria.arquivos) {
+      assert.match(
+        saida,
+        new RegExp(`\.sdd/memory/${a.arquivo.replace('.', '\.')}`),
+        `o hook nao cita "${a.arquivo}", que o catalogo declara`,
+      );
+    }
+  } finally {
+    await rm(raiz, { recursive: true, force: true });
+  }
 });
