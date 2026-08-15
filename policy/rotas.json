@@ -83,6 +83,21 @@
       ]
     },
     {
+      "id": "design",
+      "skill": "design",
+      "estagio": "arquitetura",
+      "quando": "fechar o sistema visual — antes da primeira tela, ou quando a lei muda o que o desenho pode fazer",
+      "entrega": [
+        "design"
+      ],
+      "regras": [
+        "O executor de craft de UI e EXTERNO e opcional. Presente, ele constroi as telas; ausente, a rota segue pelo fluxo proprio e o que se perde e craft, nunca governanca. Nunca declare dependencia dura dele: dependencia que nao resolve faz o `enable` do plugin FALHAR, e ai nao e a UI que para, e o framework inteiro.",
+        "A LEI VAI COMO BRIEF, e e esta regra que justifica a rota existir. Um agente de design produz, por padrao, atributo `style`, fonte de origem externa, animacao e script — e cada um deles pode ser proibido pela constitution do projeto. Levante a restricao ANTES de pedir o desenho, e passe-a por escrito.",
+        "A restricao que falha em SILENCIO vai primeiro na lista. Estilo bloqueado por CSP e descartado pelo navegador sem erro e sem teste vermelho: o desenho parece entregue e nao esta.",
+        "O artefato de design nao repete o VALOR de um token que ja vive no codigo. Ele nomeia, deriva e diz onde o valor mora — documento satelite que copia valor e a forma como este framework ja viu fato divergir em silencio."
+      ]
+    },
+    {
       "id": "sprint",
       "skill": "sprint",
       "estagio": "sprint",
@@ -94,7 +109,8 @@
         "Uma task por vez, ciclo atomico: teste vermelho, minimo para verde, refatoracao — um commit por passo.",
         "A ordem nao se conserta depois do fato. Commitar o teste depois e exatamente o habito que o gate existe para impedir.",
         "A fundacao do repositorio e excecao unica e nomeada: uma por projeto, tipo chore, sem regra de negocio. Sem ela o ciclo nao tem por onde comecar — nao ha runner para o primeiro teste falhar.",
-        "Delegue aos sub-agentes pelo nome, em janela propria. Rodar os papeis todos na sessao principal desperdica a janela de contexto e devolve a auditoria ao esforco baixo."
+        "Delegue aos sub-agentes pelo nome, em janela propria. Rodar os papeis todos na sessao principal desperdica a janela de contexto e devolve a auditoria ao esforco baixo.",
+        "Task que cria ou muda TELA passa pela rota de design antes do ciclo: o artefato de design governa, e a restricao textual da lei vai junto como brief. Sem artefato de design, a task de UI decide estetica sozinha — e o que sai fica correto, testado, e sem ninguem tendo escolhido como deveria parecer."
       ]
     },
     {

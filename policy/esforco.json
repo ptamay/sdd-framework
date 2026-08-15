@@ -36,6 +36,10 @@
       "camada": "alto",
       "porque": "e onde a ambiguidade vira lei. Cruzar contra a origem procurando CONTRADICAO (nao lacuna) e o trabalho mais caro do processo, e a que sobreviver aqui governa todas as sprints"
     },
+    "design": {
+      "camada": "alto",
+      "porque": "o craft pode ser delegado ao executor externo, mas a decisao que abre a rota nao: e cruzar a lei do projeto contra o que um agente de design faz por padrao, e dizer o que ele NAO pode. Errar aqui produz desenho que a CSP descarta em silencio — entregue na aparencia, ausente no navegador, e sem teste vermelho para acusar"
+    },
     "sprint": {
       "camada": "por-agente",
       "porque": "cada sub-agente tem camada propria em `agentes` — e o frontmatter dele e CONFERIDO contra ela, que e o que faz disso enforcement e nao recomendacao"

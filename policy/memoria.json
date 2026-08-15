@@ -43,6 +43,15 @@
       "secoes": ["Stack aprovada", "Arquitetura de modulos", "Sprint ativa", "Backlog"]
     },
     {
+      "id": "design",
+      "arquivo": "design.md",
+      "nasce": "design",
+      "guarda": "o sistema visual — direcao, tokens e o que a lei do projeto proibe ao desenho",
+      "regra": "NOMEIA, NAO COPIA. O valor de um token mora no codigo; este arquivo diz qual e o nome, de onde ele saiu e em que arquivo ele vive. Documento satelite que repete valor e a forma como dois fatos divergem sem quebrar teste. A secao de limites e a que o executor externo le ANTES de desenhar, e a restricao que falha em silencio vem primeiro nela.",
+      "secoes": ["Direcao", "Tokens", "Limites da lei", "Superficies"],
+      "porque": "Medido em projeto real em 2026-08-15: a sprint visual entregou uma marca tipografica correta, com teste de geometria que a prende, e feia — porque nenhuma rota perguntava como ela deveria PARECER. Requisito de UI cumprido ao pe da letra sem direcao declarada produz exatamente isso, e nenhum gate acusa."
+    },
+    {
       "id": "tasks",
       "arquivo": "tasks.md",
       "nasce": "sprint",

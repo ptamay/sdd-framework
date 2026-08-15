@@ -50,6 +50,46 @@ export async function carregarCatalogo() {
   return catalogo;
 }
 
+let cacheMemoria = null;
+
+/**
+ * O contrato do Memory Bank, lido do catalogo — nunca reescrito por quem consome.
+ *
+ * Existe porque `hooks/contexto.mjs` mantinha a propria lista de arquivos em codigo, com
+ * QUATRO nomes, enquanto `policy/memoria.json` declarava seis. O sintoma nao aparece na
+ * saida: `overview.md` simplesmente nunca foi citado no contexto de sessao, e ausencia de
+ * arquivo que nunca esteve la ninguem nota. Mesmo modo de errar que M-12 nomeia, na camada
+ * de processo.
+ */
+export async function carregarMemoria() {
+  if (cacheMemoria) return cacheMemoria;
+
+  const caminho = join(raizDoRepo(), 'policy', 'memoria.json');
+
+  let bruto;
+  try {
+    bruto = await readFile(caminho, 'utf8');
+  } catch (erro) {
+    // Mesma disciplina de `carregarCatalogo`: contrato ilegivel nao vira lista vazia. Lista
+    // vazia aqui e indistinguivel de "o projeto nao tem memoria", que e o estado legitimo.
+    throw new Error(`contrato de memoria ilegivel em ${caminho}: ${erro.message}`);
+  }
+
+  let contrato;
+  try {
+    contrato = JSON.parse(bruto);
+  } catch (erro) {
+    throw new Error(`contrato de memoria com JSON invalido: ${erro.message}`);
+  }
+
+  if (!Array.isArray(contrato.arquivos)) {
+    throw new Error('contrato de memoria sem a lista "arquivos"');
+  }
+
+  cacheMemoria = contrato;
+  return contrato;
+}
+
 export async function gatesAtivos() {
   const { gates } = await carregarCatalogo();
   return gates.filter((g) => g.status === 'ativo').sort((a, b) => a.numero - b.numero);

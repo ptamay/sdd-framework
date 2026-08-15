@@ -15,7 +15,7 @@
 import { readFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { gatesAtivos, carregarCatalogo } from '../gates/lib/policy.mjs';
+import { gatesAtivos, carregarCatalogo, carregarMemoria } from '../gates/lib/policy.mjs';
 
 const bruto = await lerStdin();
 let evento = {};
@@ -89,10 +89,14 @@ async function existe(caminho) {
 }
 
 async function lerMemoria(raiz) {
-  const nomes = ['constitution.md', 'spec.md', 'plan.md', 'tasks.md'];
+  // DERIVADO do catalogo, como o cabecalho deste arquivo sempre prometeu. Ate 2026-08-15
+  // esta funcao tinha lista propria, com QUATRO nomes, contra os seis de `policy/memoria.json`
+  // — e a lista mais curta era a que o agente lia em toda sessao, que e literalmente o defeito
+  // do v5 que este hook foi escrito para nao repetir.
+  const { arquivos } = await carregarMemoria();
   const achados = [];
-  for (const n of nomes) {
-    if (await existe(join(raiz, '.sdd', 'memory', n))) achados.push(`.sdd/memory/${n}`);
+  for (const a of arquivos) {
+    if (await existe(join(raiz, '.sdd', 'memory', a.arquivo))) achados.push(`.sdd/memory/${a.arquivo}`);
   }
   return achados;
 }
