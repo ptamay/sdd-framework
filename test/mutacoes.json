@@ -2,6 +2,70 @@
   "_": "Catalogo de defeitos historicos, para reintroducao deliberada. Executor do invariante M-19: caso que passou de primeira ainda nao provou nada. Cada entrada reintroduz um bug REAL, medido no v5, e exige que ao menos um caso caia. Mutacao que nao derruba nada e um furo na suite, nao um acerto do codigo.",
   "mutacoes": [
     {
+      "gate": "lib/executor-ui",
+      "origem": "nova — achado A7, medido em projeto real em 2026-08-15/16",
+      "nome": "catalogo com forma inesperada volta a passar pela guarda",
+      "efeito": "um catalogo que existe e nao tem a forma esperada deixa de ser `indeterminado` — e a rota passa a afirmar um dos dois mundos sem ter conseguido ver qual",
+      "de": "  if (!instalados || typeof instalados !== 'object' || typeof instalados.plugins !== 'object' || instalados.plugins === null) {",
+      "para": "  if (!instalados) {"
+    },
+    {
+      "gate": "lib/executor-ui",
+      "origem": "nova — a decisao do usuario invertida em silencio",
+      "nome": "\"a chave existe\" volta a contar como habilitado",
+      "efeito": "`{\"impeccable@impeccable\": false}` — que e alguem DESLIGANDO o executor — passa a ser lido como habilitado, e a rota manda chamar o comando de um plugin desligado de proposito",
+      "de": "  const ligado = habilitados.some((mapa) => mapa && mapa[EXECUTOR.chave] === true);",
+      "para": "  const ligado = habilitados.some((mapa) => mapa && EXECUTOR.chave in mapa);"
+    },
+    {
+      "gate": "design-tokens",
+      "origem": "nova — achado A8, os 2-de-11 medidos na sprint 4",
+      "nome": "a superficie sem folha volta a passar",
+      "efeito": "e literalmente o defeito medido: sete telas administrativas e a de entrar sem ligar folha nenhuma, tres sprints seguidas, sem nada reprovar",
+      "de": "    if (LIGA_FOLHA.test(s.conteudo)) continue;",
+      "para": "    if (true) continue;"
+    },
+    {
+      "gate": "design-tokens",
+      "origem": "nova — I-01 na camada visual",
+      "nome": "o bloco de tokens deixa de ser a casa legitima do valor",
+      "efeito": "o gate passa a acusar o proprio `:root`, que e o unico lugar onde o literal DEVE estar — gate que reprova quem esta certo e gate que alguem desliga (M-02)",
+      "de": "      if (b.ehTokens || b.dentroDeTokens) continue;",
+      "para": "      if (false) continue;"
+    },
+    {
+      "gate": "design-tokens",
+      "origem": "nova — a metade \"falso vermelho\", mesma familia do item 208",
+      "nome": "`url(#recorte)` volta a ser lido como cor",
+      "efeito": "referencia a filtro, mascara e recorte SVG vira acusacao de literal de cor — o gate acusa uma folha correta, e o projeto aprende a ignora-lo",
+      "de": "    const limpo = valor.replace(/url\\([^)]*\\)/gi, '');",
+      "para": "    const limpo = valor;"
+    },
+    {
+      "gate": "design-tokens",
+      "origem": "nova — medido em 2026-08-16, no Portifolio Igor",
+      "nome": "o gate volta a ignorar a valvula de isencao",
+      "efeito": "e o defeito real: `run.mjs` entrega `isencoes` a todo gate e este ignorava o argumento — `.sdd/gates-ignore.json` podia estar la, valido, e nao isentar nada, com o relatorio reprovando como se o arquivo nao existisse",
+      "de": "    if (isencao.isento(rel)) continue;",
+      "para": "    if (false) continue;"
+    },
+    {
+      "gate": "design-tokens",
+      "origem": "nova — trava 5 das isencoes, a que o v5 pagou caro",
+      "nome": "o que foi isentado deixa de aparecer no relatorio",
+      "efeito": "a isencao volta a ser indistinguivel de gate desligado: o arquivo sai da varredura e ninguem ve que saiu, que e exatamente o furo que a allowlist muda do v5 abriu",
+      "de": "  return { ...analisar({ arquivos }), isentos: isencao.aplicadas() };",
+      "para": "  return { ...analisar({ arquivos }), isentos: [] };"
+    },
+    {
+      "gate": "design-tokens",
+      "origem": "nova — classe do anti-silencio (M-01)",
+      "nome": "um eixo sem material volta a pular o projeto inteiro",
+      "efeito": "projeto com folha e sem superficie reconhecida sai `pulado`, e o eixo que TINHA o que conferir nunca roda — o silencio que o achado A4 nomeou, em outra roupa",
+      "de": "  if (folhas.length === 0 && superficies.length === 0) {",
+      "para": "  if (folhas.length === 0 || superficies.length === 0) {"
+    },
+    {
       "gate": "secrets",
       "origem": "v5 item 169",
       "nome": "comparacao de identificador volta a ser sensivel a caixa",

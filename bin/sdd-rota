@@ -13,6 +13,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { raizDoRepo, gatesAtivos } from '../gates/lib/policy.mjs';
+import { detectarNoAmbiente, linhaDeEstado } from '../gates/lib/executor-ui.mjs';
 
 const RAIZ = raizDoRepo();
 const ler = async (nome) => JSON.parse(await readFile(join(RAIZ, 'policy', nome), 'utf8'));
@@ -55,6 +56,18 @@ if (camadaDaRota?.camada === 'por-agente') {
   console.log(`**Esforco:** camada ${camadaDaRota.camada} (${c.modelo}) — ${camadaDaRota.porque}`);
 }
 console.log('');
+
+// A rota de design e a UNICA que imprime isto, e de proposito. O estado do executor muda a
+// forma de trabalhar so aqui; imprimi-lo em toda rota transformaria um sinal em ruido, e
+// ruido lido sete vezes por sprint deixa de ser lido.
+//
+// Existe porque a skill mandava "detecte, nao presuma" e o framework nao entregava deteccao
+// nenhuma: a resposta virava prosa escrita a mao no artefato, e prosa sobre estado que muda
+// sozinho envelhece — envelheceu em menos de 24 horas num projeto real (achado A7).
+if (rota.id === 'design') {
+  console.log('## Executor de craft\n');
+  console.log(`${linhaDeEstado(await detectarNoAmbiente(process.cwd()))}\n`);
+}
 
 console.log('## Prova de leitura\n');
 console.log(`${_prova_de_leitura}\n`);

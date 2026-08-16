@@ -153,21 +153,20 @@
     },
     {
       "id": "design-tokens",
-      "numero": null,
-      "status": "candidato",
-      "titulo": "Tokens de design: contraste calculado, gamut válido, fonte única",
-      "prova": "Todo par texto/fundo atinge o mínimo de contraste; nenhum token estoura o gamut sRGB; nenhum documento satélite repete o VALOR de um token",
-      "porque": "Medido em execução real: dois tokens estouravam o gamut e uma borda ficou em 1.28. Nenhuma leitura acharia, e nenhum gate olhava. A colisão de luminância entre semânticos (estados distinguíveis só por matiz) é a metade que nem o checklist cobria.",
+      "numero": 8,
+      "status": "ativo",
+      "titulo": "Toda superfície consome o sistema visual, e o valor mora num lugar só",
+      "prova": "Nenhum arquivo que renderiza documento deixa de ligar folha de estilo; nenhum literal de cor aparece em declaração fora do bloco de tokens",
+      "porque": "Medido em projeto real: 2 de 11 superfícies alcançadas pelos tokens na sprint 4, com sete telas administrativas e a de entrar sem ligar folha nenhuma — num repositório sob sete gates, com 898 testes e 92% de cobertura. A regra que mandava a task de tela passar pela rota de design existia; o único caso que a defendia conferia que a FRASE existia. Três sprints de telas nasceram sem passagem de design e nada reprovou, porque nada olhava.",
       "bloqueia": true,
       "valvula": null,
       "invariantes": [
-        "U-01",
-        "U-02",
         "U-03",
         "I-01"
       ],
-      "antiSilencio": "Sem arquivo de tokens => pula com aviso. Formato não reconhecido => FALHA.",
-      "pendencia": "precisa rodar em projeto real antes de virar bloqueio — mesma régua que a v5 aplicou à política de comentário"
+      "antiSilencio": "Sem folha E sem superfície => pula com aviso. Com um dos dois => o eixo que tem o que conferir RODA, e o aviso diz qual não rodou. Pular o projeto inteiro porque metade não achou nada esconderia a outra metade.",
+      "cobertura": "U-01 (contraste calculado) e U-02 (gamut e colisão de luminância) NÃO são executadas por este gate. Estão definidas em `policy/invariantes.json` e seguem SEM EXECUTOR — declarado, não omitido: as duas exigem parsear cor em todos os espaços que o CSS aceita e um mínimo declarado pelo projeto, e nenhuma delas foi medida em projeto real ainda. O título e a prova descrevem o que de fato roda, e por isso as duas saíram da citação de invariantes: gate que cita lei que não aplica é o defeito que este catálogo acabou de consertar.",
+      "saiuDeCandidato": "2026-08-16, com a evidência do achado A8. A pendência anterior dizia 'precisa rodar em projeto real antes de virar bloqueio' — rodou, e é o projeto real que produziu o número acima."
     },
     {
       "id": "task-binding",

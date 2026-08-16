@@ -1,0 +1,44 @@
+{
+  "_": "FONTE ÚNICA das invariantes que os gates citam. Nasceu porque `policy/gates.json` citava `U-01`, `U-02` e `U-03` em `design-tokens` e essas três NÃO ESTAVAM DEFINIDAS EM LUGAR NENHUM — nem neste repositório, nem no v5. Gate que declara aplicar uma lei inexistente é exatamente a classe de defeito que este framework existe para impedir, e ela estava aqui dentro. Um caso em `test/cases/design-tokens.test.mjs` trava a reincidência: toda invariante citada por esse gate precisa existir aqui, com texto e com o motivo escrito.",
+
+  "versaoSchema": 1,
+
+  "_derivacao": "As três invariantes de UI NÃO foram inventadas para preencher a citação. Cada uma deriva do que o próprio gate já declarava provar em `prova` e `porque` — que foram escritos a partir de medição em execução real — mais o que a sprint 4 do projeto de origem mediu em 2026-08-15/16. Onde a derivação foi possível, ela está dita na própria entrada. Inventar lei para casar com uma citação seria trocar um defeito por outro, mais bem escondido.",
+
+  "_orfas": "AINDA ÓRFÃS, e declaradas em vez de omitidas: `S-01`, `S-02`, `S-03`, `M-01`, `M-02`, `M-03`, `M-08`, `M-10`, `M-12`, `M-19`, `P-01`, `P-12`, `P-13` e `I-06` são citadas por gates ativos e por comentários deste repositório e não têm texto em arquivo nenhum. Estão na bancada (`ACHADOS.md`, A9). NÃO foram escritas aqui de improviso: as três de UI entraram por decisão do dono, com a derivação à vista; as outras exigem a mesma conversa, e escrevê-las por conta própria produziria a mesma fabricação que este arquivo nasceu para consertar.",
+
+  "invariantes": [
+    {
+      "id": "I-01",
+      "familia": "integridade",
+      "titulo": "Fonte única",
+      "texto": "Um fato existe em UM lugar. Quem precisa dele lê desse lugar ou é gerado a partir dele — nunca o reescreve. Documento satélite NOMEIA, deriva e diz onde o valor mora; não copia o valor.",
+      "porque": "Cópia deriva em silêncio: os dois fatos divergem e nenhum teste quebra, porque cada cópia continua internamente coerente. O v5 corrigiu a mesma faixa de gates desatualizada duas vezes à mão antes de aprender isso, e chegou a ter quatro versões divergentes da mesma lista.",
+      "derivada_de": "Já era afirmada em dois lugares deste repositório antes de existir catálogo: o cabeçalho de `policy/gates.json` e o de `gates/lib/policy.mjs`. Escrever aqui é consolidar, não criar."
+    },
+    {
+      "id": "U-01",
+      "familia": "ui",
+      "titulo": "Contraste é medido, nunca declarado",
+      "texto": "Todo par texto/fundo que o sistema visual produz tem o contraste CALCULADO a partir do valor real dos tokens e comparado com um mínimo declarado pelo projeto. 'Parece legível' não é medida, e o mínimo é do projeto — o framework não o inventa.",
+      "porque": "Medido em execução real: uma borda ficou em 1.28 e nenhuma leitura acharia. Contraste é a única propriedade visual que falha para uma pessoa específica e passa despercebida por todas as outras — quem desenha tem a tela boa e a visão que tem.",
+      "derivada_de": "Primeira cláusula de `prova` do gate `design-tokens`, e a primeira metade do `porque` dele."
+    },
+    {
+      "id": "U-02",
+      "familia": "ui",
+      "titulo": "Token que o navegador reinterpreta em silêncio é token errado",
+      "texto": "Nenhum token de cor estoura o gamut que a superfície renderiza, e nenhum par de tokens semânticos distintos se distingue APENAS por matiz. Valor fora de gamut é reinterpretado sem erro e sem log: o valor declarado e o pixel exibido divergem, e ninguém é avisado.",
+      "porque": "Medido em execução real: dois tokens estouravam o gamut e nada acusou. A colisão de luminância entre semânticos é a metade que nem o checklist cobria — dois estados que só diferem em matiz são o mesmo estado para quem tem daltonismo e em qualquer superfície monocromática.",
+      "derivada_de": "Segunda cláusula de `prova` do gate `design-tokens`, e a segunda metade do `porque` dele — que nomeia a colisão de luminância explicitamente."
+    },
+    {
+      "id": "U-03",
+      "familia": "ui",
+      "titulo": "Toda superfície consome o sistema visual, e o valor mora num lugar só",
+      "texto": "Superfície que renderiza interface CONSOME o sistema visual declarado do projeto — não inventa o próprio. E o valor de um token mora no código, num lugar único: literal de estilo fora do bloco de tokens é o valor ganhando segunda casa.",
+      "porque": "Medido em projeto real na sprint 4, em 2026-08-15: **2 de 11 superfícies** alcançadas pelos tokens, com sete telas administrativas e a de entrar sem ligar folha de estilo nenhuma, num repositório sob sete gates, com 898 testes e 92% de cobertura. Três sprints de telas nasceram sem passagem de design e nada reprovou, porque nada olhava. O mesmo projeto escreveu à mão a guarda de literal fora do bloco de tokens — guarda que um projeto real precisou construir sozinho é lei que faltava aqui.",
+      "derivada_de": "Terceira cláusula de `prova` do gate `design-tokens` ('nenhum documento satélite repete o VALOR de um token') mais a regra da rota de sprint que mandava a task de tela passar pelo design e não tinha nada que a medisse. É a especialização de I-01 na camada visual, com a metade de cobertura de superfície que I-01 sozinha não alcança."
+    }
+  ]
+}

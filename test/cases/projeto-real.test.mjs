@@ -107,6 +107,7 @@ test('projeto doente: cada gate acusa o defeito que e DELE', async () => {
   assert.match(texto('coverage'), /41/, 'coverage nao reportou o percentual medido');
   assert.match(texto('env-bypass'), /SKIP_2FA|TENANT/, 'env-bypass nao apontou o bypass plantado');
   assert.match(texto('typecheck'), /reprovou/, 'typecheck nao reportou a reprovacao');
+  assert.match(texto('design-tokens'), /painel\.html/, 'design-tokens nao apontou a tela sem folha');
 
   // O texto do verificador chega inteiro ao relatorio — segunda metade do item 255: o erro
   // impresso tem de ser o da invocacao que decidiu, nao de outra.

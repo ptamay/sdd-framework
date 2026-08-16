@@ -22,12 +22,11 @@ O craft de UI preferido e o **`impeccable`** (`pbakaus/impeccable`), instalado p
 `/plugin marketplace add pbakaus/impeccable`. Ele **nao vem com este framework** e pode nao estar
 na maquina.
 
-- **Presente** → e ele quem constroi as telas. `/impeccable init` produz `PRODUCT.md` e `DESIGN.md`;
-  `/impeccable polish <alvo>` trabalha uma tela existente. O artefato desta rota
-  (`.sdd/memory/design.md`) continua sendo o que MANDA: onde os dois discordarem, a lei do projeto
-  desempata, e o que o executor propos entra por decisao registrada, nao por chegada.
-- **Ausente** → **nada bloqueia.** Siga o fluxo desta rota a mao. O que se perde e craft; a
-  governanca — artefato, secoes, limites, gates — vale integralmente nos dois casos.
+**A deteccao e do comando, nunca da sua leitura.** O `sdd-rota design` acima imprimiu a secao
+`## Executor de craft` com **um de tres estados** — presente, ausente, indeterminado — e o que fazer
+em cada um. Nao releia catalogo de plugin a mao, e **nao escreva o estado no artefato**: estado que
+muda sozinho, congelado em prosa, envelhece. Este framework mediu 24 horas entre o fato escrito e o
+fato falso.
 
 Nao instale o plugin por conta propria e **nunca** declare dependencia dura dele: dependencia que
 nao resolve faz o `enable` FALHAR, e ai nao e a UI que para, e o framework inteiro.
@@ -36,12 +35,15 @@ nao resolve faz o `enable` FALHAR, e ai nao e a UI que para, e o framework intei
 
 **A lei vai como brief, e ela e o unico motivo de esta rota existir.** Um agente de design produz,
 por padrao, atributo `style`, fonte de origem externa, animacao e script. Levante na
-`constitution.md` e na `spec.md` do projeto o que esta proibido, escreva na secao de limites do
-artefato, e so entao peca o desenho.
+`constitution.md` e na `spec.md` o que esta proibido, escreva na secao `## Limites da lei`, e so
+entao peca o desenho — a secao e o brief, e ela vai **antes**, nunca em revisao depois.
 
 **Primeiro na lista de limites vai a restricao que falha em SILENCIO.** Estilo bloqueado por CSP e
 descartado pelo navegador sem erro, sem log e sem teste vermelho: o desenho parece entregue e nao
 esta. Restricao que quebra a suite se defende sozinha; essa nao.
+
+**O `PRODUCT.md` do executor sai de `overview.md` e `spec.md`** — nao reentreviste o usuario sobre o
+que a memoria do projeto ja responde. O `DESIGN.md` dele e derivado e **nao repete valor de token**.
 
 **Delegue em janela propria**, como as outras rotas: rodar o levantamento da lei e o craft na mesma
 sessao devolve a decisao ao esforco de quem ja gastou a janela lendo CSS.

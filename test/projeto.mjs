@@ -93,6 +93,24 @@ export async function montarSao() {
 
   await escrever(raiz, 'test/agenda.test.ts', "import { Horario } from '../src/agenda';\n");
 
+  // 8. design-tokens — superficie que LIGA a folha, e a folha com o valor no bloco de tokens.
+  //    O par sao/doente aqui prova as duas metades: que o gate acusa a tela sem sistema
+  //    visual, e que ele nao acusa a tela que passou pelo design (M-02).
+  await escrever(raiz, 'public/estilos/tema.css', [
+    ':root {',
+    '  --cor-acao: #128c4a;',
+    '  --cor-sobre-acao: #ffffff;',
+    '}',
+    '.chamada { background: var(--cor-acao); color: var(--cor-sobre-acao); }',
+  ].join('\n'));
+
+  await escrever(raiz, 'src/pages/index.html', [
+    '<html lang="pt-BR">',
+    '  <head><link rel="stylesheet" href="/estilos/tema.css"></head>',
+    '  <body><a class="chamada" href="#">agendar</a></body>',
+    '</html>',
+  ].join('\n'));
+
   // Migrations no dialeto `pair`, com o par presente.
   await escrever(raiz, 'supabase/migrations/001_init.sql', 'create table agendamento();');
   await escrever(raiz, 'db/migrations/001_init.down.sql', 'drop table agendamento;');
@@ -131,6 +149,21 @@ export async function montarDoente() {
   ].join('\n'));
 
   await escrever(raiz, 'test/pagamento.test.ts', "import { cliente } from '../src/pagamento';\n");
+
+  // 8. design-tokens — os DOIS eixos, porque medem coisas diferentes: a tela que nasceu sem
+  //    passar pelo sistema visual, e o valor com segunda casa. E o defeito que um projeto
+  //    real levou tres sprints carregando sem nada reprovar.
+  await escrever(raiz, 'src/pages/painel.html', [
+    '<html lang="pt-BR">',
+    '  <head><title>painel</title></head>',
+    '  <body><h1>painel</h1></body>',
+    '</html>',
+  ].join('\n'));
+
+  await escrever(raiz, 'public/estilos/tema.css', [
+    ':root { --cor-acao: #128c4a; }',
+    '.chamada { background: #128c4a; }',
+  ].join('\n'));
 
   // 2. migrations — UP sem o par DOWN.
   await escrever(raiz, 'supabase/migrations/001_init.sql', 'create table pagamento();');

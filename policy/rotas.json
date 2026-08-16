@@ -91,7 +91,10 @@
         "design"
       ],
       "regras": [
-        "O executor de craft de UI e EXTERNO e opcional. Presente, ele constroi as telas; ausente, a rota segue pelo fluxo proprio e o que se perde e craft, nunca governanca. Nunca declare dependencia dura dele: dependencia que nao resolve faz o `enable` do plugin FALHAR, e ai nao e a UI que para, e o framework inteiro.",
+        "DETECTE o executor com `sdd-rota design`, nunca lendo catalogo de plugin a mao. A rota imprime um de TRES estados — presente, ausente ou indeterminado. `indeterminado` nao e `ausente`: e a rota dizendo que nao conseguiu ver, e presumir qualquer um dos dois ali produz o desenho que parece entregue e nao esta.",
+        "O executor e EXTERNO, e a instalacao dele e opcional — o USO dele NAO e. Presente, ele deixa de ser opcional: e ele quem constroi as telas, e nao usa-lo passa a ser decisao registrada neste artefato, nunca omissao. Ausente, a rota segue pelo fluxo proprio e o que se perde e craft, nunca governanca. Nunca declare dependencia dura dele: dependencia que nao resolve faz o `enable` do plugin FALHAR, e ai nao e a UI que para, e o framework inteiro.",
+        "A secao `## Limites da lei` do artefato E o brief que o executor le ANTES de desenhar, e a rota o entrega por escrito. Onde o executor e este artefato discordarem, o artefato manda; o que ele propuser entra por decisao registrada, nunca por chegada.",
+        "O artefato NAO AFIRMA o estado do executor — ele aponta para o comando que o mede. Medido: um artefato fechou dizendo que o plugin nao estava habilitado, o plugin foi habilitado no dia seguinte, e a frase continuou la. Estado que muda sozinho, congelado em prosa, e a mesma doenca de copiar valor de token, com outra roupa.",
         "A LEI VAI COMO BRIEF, e e esta regra que justifica a rota existir. Um agente de design produz, por padrao, atributo `style`, fonte de origem externa, animacao e script — e cada um deles pode ser proibido pela constitution do projeto. Levante a restricao ANTES de pedir o desenho, e passe-a por escrito.",
         "A restricao que falha em SILENCIO vai primeiro na lista. Estilo bloqueado por CSP e descartado pelo navegador sem erro e sem teste vermelho: o desenho parece entregue e nao esta.",
         "O artefato de design nao repete o VALOR de um token que ja vive no codigo. Ele nomeia, deriva e diz onde o valor mora — documento satelite que copia valor e a forma como este framework ja viu fato divergir em silencio."
@@ -110,7 +113,7 @@
         "A ordem nao se conserta depois do fato. Commitar o teste depois e exatamente o habito que o gate existe para impedir.",
         "A fundacao do repositorio e excecao unica e nomeada: uma por projeto, tipo chore, sem regra de negocio. Sem ela o ciclo nao tem por onde comecar — nao ha runner para o primeiro teste falhar.",
         "Delegue aos sub-agentes pelo nome, em janela propria. Rodar os papeis todos na sessao principal desperdica a janela de contexto e devolve a auditoria ao esforco baixo.",
-        "Task que cria ou muda TELA passa pela rota de design antes do ciclo: o artefato de design governa, e a restricao textual da lei vai junto como brief. Sem artefato de design, a task de UI decide estetica sozinha — e o que sai fica correto, testado, e sem ninguem tendo escolhido como deveria parecer."
+        "Task que cria ou muda TELA passa pela rota de design antes do ciclo: o artefato de design governa, e a restricao textual da lei vai junto como brief. Sem artefato de design, a task de UI decide estetica sozinha — e o que sai fica correto, testado, e sem ninguem tendo escolhido como deveria parecer. Esta regra deixou de ser so texto: o gate `design-tokens` mede a passagem, e superficie que renderiza documento sem ligar folha de estilo REPROVA. Ate 2026-08-16 o unico caso que a defendia conferia que a frase existia, e um projeto real chegou a sprint 4 com 2 de 11 superficies alcancadas pelos tokens."
       ]
     },
     {

@@ -84,6 +84,43 @@ test('a skill de design declara os DOIS mundos: executor presente e executor aus
 
 // --------------------------------------------------------------------- o elo com a sprint
 
+test('presente, o executor NAO e opcional — a rota vincula, e nao usar e decisao a registrar', async () => {
+  // A regressao que este caso impede tem nome e data. A redacao anterior dizia "presente, ele
+  // constroi as telas" em tom de possibilidade, e um projeto real leu isso, teve o executor
+  // instalado, e construiu tres sprints de tela a mao sem violar regra nenhuma. Permissao
+  // redigida como faculdade nao produz passagem — produz a passagem que era mais barata.
+  const { rotas } = await lerPolicy('rotas.json');
+  const design = rotas.find((r) => r.id === 'design');
+  const regras = design.regras.join(' ');
+
+  assert.match(
+    regras,
+    /nao e opcional|deixa de ser opcional|obrigatori|decisao registrada/i,
+    'a rota de design trata o executor presente como faculdade, nao como vinculo',
+  );
+});
+
+test('a rota de design manda passar a lei como brief POR ESCRITO ao executor', async () => {
+  // A sinergia inteira e esta linha: o executor le a secao de limites do artefato ANTES de
+  // desenhar. Sem isso os dois rodam lado a lado — um governa e o outro desenha o que quiser.
+  const { rotas } = await lerPolicy('rotas.json');
+  const design = rotas.find((r) => r.id === 'design');
+  const regras = design.regras.join(' ');
+
+  assert.match(regras, /brief/i, 'a rota nao manda passar a lei como brief');
+  assert.match(regras, /limites/i, 'a rota nao nomeia a secao que o executor le antes de desenhar');
+});
+
+test('a skill de design nomeia a secao de limites como o brief do executor', async () => {
+  const texto = await readFile(join(RAIZ, 'skills', 'design', 'SKILL.md'), 'utf8');
+  assert.match(texto, /Limites da lei/i, 'a skill nao aponta o executor para a secao de limites');
+});
+
+test('a skill de design manda DETECTAR pelo comando, nao pela leitura a mao', async () => {
+  const texto = await readFile(join(RAIZ, 'skills', 'design', 'SKILL.md'), 'utf8');
+  assert.match(texto, /sdd-rota design/, 'a skill nao aponta para o comando que detecta');
+});
+
 test('a rota de sprint manda a task de UI passar pelo executor, com a lei como brief', async () => {
   // O elo que faz a rota valer alguma coisa. Sem ele, o artefato de design existe e nenhuma
   // task e obrigada a olhar para ele — que e o modo de errar ja catalogado neste framework:
