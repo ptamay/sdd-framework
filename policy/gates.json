@@ -4,6 +4,7 @@
   "gates": [
     {
       "id": "imports",
+      "isencoes": { "honra": true, "porque": "varre a arvore inteira do projeto: isentar tira o arquivo do corpus antes da analise, e o relatorio imprime o que saiu" },
       "numero": 3,
       "status": "ativo",
       "titulo": "Todo import tem dependência declarada",
@@ -23,6 +24,7 @@
     },
     {
       "id": "migrations",
+      "isencoes": { "honra": true, "porque": "varre a arvore em busca de migration: isentar tira o arquivo do corpus, e o UP isentado deixa de exigir DOWN" },
       "numero": 2,
       "status": "ativo",
       "titulo": "Todo UP tem DOWN real, na forma do dialeto",
@@ -48,6 +50,7 @@
     },
     {
       "id": "secrets",
+      "isencoes": { "honra": true, "porque": "varre a arvore inteira do projeto: isentar tira o arquivo do corpus antes da analise, e o relatorio imprime o que saiu" },
       "numero": 1,
       "status": "ativo",
       "titulo": "Nenhum secret hardcoded",
@@ -65,6 +68,7 @@
     },
     {
       "id": "tdd-order",
+      "isencoes": { "honra": false, "porque": "nao varre arquivo — le o historico do git. Nao ha caminho a isentar, e uma isencao aqui seria aceita e ignorada, que e o defeito do achado A10" },
       "numero": 4,
       "status": "ativo",
       "titulo": "Ordem TDD: teste antes de implementação, por task",
@@ -80,6 +84,7 @@
     },
     {
       "id": "typecheck",
+      "isencoes": { "honra": false, "porque": "nao varre arquivo — invoca o verificador de tipos da stack. O que fica fora da verificacao e decisao do tsconfig (ou equivalente), e duplicar isso aqui criaria segunda fonte para o mesmo fato (I-01)" },
       "numero": 7,
       "status": "ativo",
       "titulo": "Type-check da stack passa",
@@ -94,6 +99,7 @@
     },
     {
       "id": "env-bypass",
+      "isencoes": { "honra": true, "porque": "varre a arvore em busca de arquivo de configuracao: isentar tira o arquivo do corpus antes da analise" },
       "numero": 6,
       "status": "ativo",
       "titulo": "Nenhum bypass de desenvolvimento em configuração de produção",
@@ -118,6 +124,7 @@
     },
     {
       "id": "coverage",
+      "isencoes": { "honra": false, "porque": "nao varre codigo do projeto — le relatorio de cobertura, que e saida gerada. O que se isenta de cobertura se declara na ferramenta que a mede, nao aqui. A valvula deste gate e o minimo, em .sdd/coverage-min" },
       "numero": 5,
       "status": "ativo",
       "titulo": "Cobertura de teste medida acima do mínimo",
@@ -153,6 +160,7 @@
     },
     {
       "id": "design-tokens",
+      "isencoes": { "honra": true, "porque": "varre a arvore em busca de superficie e de folha: isentar tira o arquivo do corpus, e alcanca os DOIS eixos" },
       "numero": 8,
       "status": "ativo",
       "titulo": "Toda superfície consome o sistema visual, e o valor mora num lugar só",

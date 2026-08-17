@@ -17,6 +17,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { compilarIsencoes } from './lib/isencoes.mjs';
+
 // Perfis onde relaxar deixa de ser legitimo.
 const PROTEGIDO = [
   /(^|[.\/])(production|producao|prod|staging|homolog\w*)([.\/]|$)/i,
@@ -128,13 +130,23 @@ export function analisar({ arquivos = [] } = {}) {
 
 const IGNORAR_DIR = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage']);
 
-export async function rodar(raizProjeto) {
+/**
+ * Este `rodar` nem aceitava `opcoes` — era a evidencia mais crua do achado A10: o runner
+ * entregava `{ valvula, isencoes }` e a assinatura descartava os dois no parametro que nao
+ * existia. As cinco travas validariam a isencao, e ela nao faria nada.
+ *
+ * `.env.production` e CANARIO, entao nenhuma isencao alcanca o perfil de producao mais
+ * obvio — o que este gate protege continua fora do alcance da valvula por construcao.
+ */
+export async function rodar(raizProjeto, opcoes = {}) {
+  const isencao = compilarIsencoes(opcoes.isencoes ?? [], 'env-bypass');
   const arquivos = [];
   for await (const rel of caminhar(raizProjeto)) {
+    if (isencao.isento(rel)) continue;
     const conteudo = await readFile(join(raizProjeto, rel), 'utf8').catch(() => '');
     arquivos.push({ caminho: rel, conteudo });
   }
-  return analisar({ arquivos });
+  return { ...analisar({ arquivos }), isentos: isencao.aplicadas() };
 }
 
 async function* caminhar(raizProjeto, prefixo = '', profundidade = 0) {

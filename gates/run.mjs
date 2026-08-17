@@ -78,7 +78,8 @@ export async function executarTodos({
   // Arquivo de isencoes malformado NAO significa "nenhuma isencao". Ele pode estar tentando
   // isentar alguma coisa e falhando por erro de digitacao — e aceitar isso em silencio faz
   // o usuario achar que isentou quando nao isentou, ou o contrario. A execucao inteira para.
-  const problemas = validarIsencoes(isencoes, ativos.map((g) => g.id));
+  // Os OBJETOS do catalogo, e nao os identificadores: e `isencoes.honra` que liga a trava 6.
+  const problemas = validarIsencoes(isencoes, ativos);
   if (problemas.length > 0) {
     const resultados = ativos.map((g) => ({
       id: g.id,

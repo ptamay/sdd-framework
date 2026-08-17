@@ -14,6 +14,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join, basename, dirname } from 'node:path';
 
+import { compilarIsencoes } from './lib/isencoes.mjs';
+
 const DRIVERS = [
   'pg', 'postgres', 'postgresql', 'mysql', 'mysql2', 'mariadb', 'sqlite3', 'better-sqlite3',
   'mongodb', 'mongoose', 'psycopg2', 'psycopg2-binary', 'asyncpg', 'sqlalchemy', 'pymongo',
@@ -253,8 +255,15 @@ export async function rodar(raizProjeto, opcoes = {}) {
   // A valvula vem do runner, que e o dono da leitura de `.sdd/`. Gate nao le valvula do
   // disco: duas fontes para o mesmo fato e como a divergencia comeca (I-01).
   const valvula = opcoes.valvula ?? null;
+
+  // O isento sai do CORPUS, antes de `detectar()` e de `analisar()`. Aqui isso importa mais
+  // do que em qualquer outro gate: o par UP/DOWN e conferido por PRESENCA DE IRMAO na arvore,
+  // entao filtrar achado a achado deixaria o arquivo isentado ainda valendo como DOWN de
+  // outra migration — a isencao mudaria a resposta de uma pergunta que ninguem fez.
+  const isencao = compilarIsencoes(opcoes.isencoes ?? [], 'migrations');
   const arquivos = [];
   for await (const rel of caminhar(raizProjeto)) {
+    if (isencao.isento(rel)) continue;
     const conteudo = await readFile(join(raizProjeto, rel), 'utf8').catch(() => '');
     arquivos.push({ caminho: rel, conteudo });
   }
@@ -264,7 +273,7 @@ export async function rodar(raizProjeto, opcoes = {}) {
   );
 
   const { dialeto, motivo } = detectar({ arquivos, manifesto, valvula });
-  return { ...analisar({ dialeto, arquivos }), dialeto, motivo };
+  return { ...analisar({ dialeto, arquivos }), dialeto, motivo, isentos: isencao.aplicadas() };
 }
 
 async function* caminhar(raizProjeto, prefixo = '') {

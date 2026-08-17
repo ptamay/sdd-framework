@@ -5,13 +5,19 @@
 // que precisou de dois casos so para impedir que ela casasse tudo — e o arquivo entrou na
 // zona protegida porque allowlist e superficie de ataque, nao conforto.
 //
-// Cinco travas:
+// Seis travas:
 //   1. ancorada     o caminho exige ^ e $. Sem eles, `vendor/x.test.mjs.bak` entra de carona
 //   2. estreita     nenhum padrao pode alcancar um CANARIO — codigo comum de projeto
 //   3. por gate     nao ha isencao global; ela vale para UM gate nomeado
 //   4. justificada  sem motivo escrito, ninguem reabre a decisao depois
 //   5. visivel      o gate reporta o que isentou (o v5 fechou o furo e a allowlist seguiu
 //                   MUDA em tempo de execucao — ninguem via o arquivo sair da varredura)
+//   6. honrada      o gate nomeado precisa DECLARAR que honra isencao. A trava 6 nasceu do
+//                   achado A10: `design-tokens` ignorava o argumento inteiro, entao uma
+//                   isencao podia passar nas cinco travas anteriores e nao isentar nada, com
+//                   o relatorio reprovando como se o arquivo nao existisse. As cinco primeiras
+//                   travas protegem o repositorio de uma isencao larga demais; a sexta protege
+//                   o USUARIO de uma isencao que nao faz nada, que e o silencio ao contrario.
 
 /**
  * Caminhos que uma isencao JAMAIS pode alcancar.
@@ -34,8 +40,22 @@ export const CANARIOS = [
 
 const MOTIVO_MINIMO = 20;
 
+/**
+ * `gatesConhecidos` aceita as DUAS formas, e isso e deliberado.
+ *
+ * Objetos do catalogo — `{ id, isencoes: { honra } }` — ligam a trava 6. Identificadores
+ * soltos mantem quem chamava antes funcionando, sem que a ausencia de declaracao vire recusa
+ * surpresa: a trava 6 so recusa o que o catalogo AFIRMA nao honrar, nunca o que ele silencia.
+ */
 export function validarIsencoes(lista, gatesConhecidos = []) {
   if (!Array.isArray(lista)) return ['o arquivo de isencoes nao contem a lista "isencoes"'];
+
+  const ids = gatesConhecidos.map((g) => (typeof g === 'string' ? g : g?.id));
+  const naoHonram = new Set(
+    gatesConhecidos
+      .filter((g) => typeof g === 'object' && g?.isencoes && g.isencoes.honra === false)
+      .map((g) => g.id),
+  );
 
   const problemas = [];
 
@@ -52,8 +72,13 @@ export function validarIsencoes(lista, gatesConhecidos = []) {
     // Trava 3 — por gate.
     if (!gate || typeof gate !== 'string') {
       problemas.push(`${onde}: sem o campo "gate" — nao existe isencao global`);
-    } else if (!gatesConhecidos.includes(gate)) {
+    } else if (!ids.includes(gate)) {
       problemas.push(`${onde}: gate desconhecido "${gate}"`);
+    } else if (naoHonram.has(gate)) {
+      // Trava 6. Recusar e ACIONAVEL; aceitar e ignorar e o silencio do achado A10.
+      problemas.push(
+        `${onde}: o gate "${gate}" nao honra isencao — ele nao varre arquivo, entao nao ha caminho a isentar. Uma isencao aqui seria aceita e nao faria nada`,
+      );
     }
 
     // Trava 4 — justificada.

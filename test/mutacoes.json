@@ -66,6 +66,42 @@
       "para": "  if (folhas.length === 0 || superficies.length === 0) {"
     },
     {
+      "gate": "migrations",
+      "origem": "nova — achado A10, medido em 2026-08-16",
+      "nome": "o gate de migrations volta a ignorar a valvula de isencao",
+      "efeito": "a isencao passa nas seis travas e nao isenta nada — o UP isentado continua exigindo DOWN, e o relatorio reprova como se o arquivo de isencoes nao existisse",
+      "de": "    if (isencao.isento(rel)) continue;",
+      "para": "    if (false) continue;",
+      "suite": "contrato-isencoes"
+    },
+    {
+      "gate": "env-bypass",
+      "origem": "nova — achado A10, o caso mais cru: o `rodar` nem aceitava `opcoes`",
+      "nome": "o gate de bypass volta a ignorar a valvula de isencao",
+      "efeito": "mesma armadilha do gate 8, no gate que guarda configuracao de producao: isencao aceita, validada, e sem efeito nenhum",
+      "de": "    if (isencao.isento(rel)) continue;",
+      "para": "    if (false) continue;",
+      "suite": "contrato-isencoes"
+    },
+    {
+      "gate": "lib/isencoes",
+      "origem": "nova — trava 6, a que fecha A10 do lado do usuario",
+      "nome": "a trava 6 para de recusar isencao para gate que nao honra",
+      "efeito": "volta o silencio que originou A10: o usuario escreve isencao para `tdd-order`, `coverage` ou `typecheck`, ela e aceita, e nao faz nada — sem erro, sem aviso, sem jeito de descobrir",
+      "de": "    } else if (naoHonram.has(gate)) {",
+      "para": "    } else if (false) {",
+      "suite": "contrato-isencoes"
+    },
+    {
+      "gate": "lib/isencoes",
+      "origem": "nova — a outra metade da trava 6",
+      "nome": "a trava 6 passa a recusar TODO gate declarado",
+      "efeito": "recusa que recusa tudo passaria no caso de recusa e quebraria a valvula inteira — nenhuma isencao legitima seria mais aceita, e o gate 8 do projeto real voltaria a reprovar",
+      "de": "      .filter((g) => typeof g === 'object' && g?.isencoes && g.isencoes.honra === false)",
+      "para": "      .filter((g) => typeof g === 'object')",
+      "suite": "contrato-isencoes"
+    },
+    {
       "gate": "secrets",
       "origem": "v5 item 169",
       "nome": "comparacao de identificador volta a ser sensivel a caixa",

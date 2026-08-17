@@ -356,7 +356,7 @@ inventar onze leis para deixá-lo verde, que é o caminho errado.
 
 ---
 
-## A10 · `run.mjs` entrega `isencoes` a TODO gate, e só dois consumiam — CONSERTADO em 2026-08-16 (0.5.0)
+## A10 · `run.mjs` entrega `isencoes` a TODO gate, e só dois consumiam — CONSERTADO em 2026-08-16 (0.5.0), incluindo a lista inteira
 
 **Medido em 2026-08-16**, ao aplicar a válvula que o próprio A8 deixou como recomendação: isentar
 as sete telas do Portifólio Igor do gate 8, com a task 4.7 como dono.
@@ -384,10 +384,36 @@ isenção — isentar tudo e receber verde seria a válvula fabricando aprovaç�
 ela existe para fazer. Cinco casos novos, com o controle que discrimina (sem isenção, reprova) e
 duas mutações: o gate voltar a ignorar a válvula, e o isentado sumir do relatório.
 
-**Ainda aberto, e é maior que este conserto:** os outros gates. `migrations`, `tdd-order`,
-`coverage`, `env-bypass` e `typecheck` recebem `isencoes` e nenhum foi conferido. **Dono: o
-mantenedor do framework.** O caso que fecha de vez é de contrato, não de gate: *todo gate ativo que
-varre arquivo honra as isenções, e devolve `isentos`* — escrito uma vez, aplicado à lista inteira.
+**Fechado no mesmo dia, e o fecho é de contrato, não de gate.** Conferir os outros cinco mostrou
+que "todo gate honra isenção" seria a regra errada — três deles não varrem arquivo:
+
+| Gate | Varre arquivo? | Decisão |
+|---|---|---|
+| `secrets`, `imports`, `design-tokens` | sim | honram, e já honravam ao fim do dia |
+| `migrations` | sim | **era lacuna** — passou a honrar |
+| `env-bypass` | sim | **era lacuna, e a mais crua**: o `rodar` nem aceitava `opcoes` |
+| `tdd-order` | não — lê o histórico do git | não honra |
+| `coverage` | não — lê relatório, que é saída gerada | não honra; a válvula dele é o mínimo |
+| `typecheck` | não — invoca o verificador da stack | não honra; o recorte é do `tsconfig` (I-01) |
+
+Cada gate **declara** em `policy/gates.json` qual dos dois é, com o motivo escrito. E a declaração
+não é a prova: `test/cases/contrato-isencoes.test.mjs` mede as duas metades — para quem declara
+honrar, um fixture em disco que o gate **acusa** (controle que discrimina) e depois deixa de acusar
+sob isenção, com o caminho em `isentos`; e um caso que reprova o gate que declara honrar **sem ter
+fixture que o prove**, para que a próxima declaração não vire decoração.
+
+**A metade que fecha A10 do lado do usuário é a trava 6:** isenção que nomeia gate que não honra é
+**recusada**, com o gate no texto do erro. Antes ela era aceita e ignorada — o usuário escrevia,
+passava nas cinco travas, e nada acontecia. Recusar é acionável; aceitar e ignorar é o silêncio.
+
+**Uma decisão de fixture que vale registrar, porque é sobre a lista crescer:** os venenos do
+arquivo de contrato são montados em pedaços em vez de escritos inteiros. Escritos inteiros, os
+gates 1 e 3 acusariam o próprio arquivo, e o caminho conhecido seria mais duas linhas em
+`.sdd/gates-ignore.json` — como já acontece com `secrets.test.mjs` e `imports.test.mjs`. Lá a
+isenção se justifica: aqueles testam a **detecção**, e credencial fora do formato real não prova
+nada. Aqui não: este arquivo só precisa que o gate acuse **alguma coisa**. Isenção gasta é
+permanente, e com ela um segredo real colado ali deixaria de ser pego. **A lista do que os gates
+deixam de olhar só cresce quando não há outro caminho.**
 
 ---
 
